@@ -1,4 +1,4 @@
-const webAppUrl = "https://script.google.com/a/macros/carrybee.com/s/AKfycbyPkt34_jOEg8no_k03kuqcfr9bBlmJzYmJrgHX72f3K8fKd5XF7icEwD1LrtHK5rKE/exec"; // your actual URL
+const webAppUrl = "https://script.google.com/macros/s/AKfycbyPkt34_jOEg8no_k03kuqcfr9bBlmJzYmJrgHX72f3K8fKd5XF7icEwD1LrtHK5rKE/exec"; // Replace with your public Web App URL
 
 function handleSubmit(action) {
   const name = document.getElementById("name").value.trim();
@@ -76,9 +76,9 @@ function loadHistory() {
         "<table style='width:100%; border-collapse: collapse; margin-top:10px;'><thead><tr><th style='border-bottom:1px solid #ccc; text-align:left;'>Date & Time</th><th style='border-bottom:1px solid #ccc;'>Action</th><th style='border-bottom:1px solid #ccc;'>Status</th></tr></thead><tbody>";
       data.forEach((it) => {
         html += `<tr>
-          <td>${it.timestamp}</td>
+          <td>${it.timestamp || it.day}</td>
           <td>${it.action}</td>
-          <td>${it.status}</td>
+          <td>${it.status || it.late}</td>
         </tr>`;
       });
       html += "</tbody></table>";
