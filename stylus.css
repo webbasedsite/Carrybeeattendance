@@ -1,103 +1,152 @@
+/* Reset & Base Styles */
+* {
+  box-sizing: border-box;
+}
+
 body {
-  font-family: 'Segoe UI', sans-serif;
-  background: #eef2f5;
+  font-family: 'Segoe UI', 'Roboto', sans-serif;
+  background: linear-gradient(135deg, #f1f4f8, #dff0fb);
   margin: 0;
+  padding: 0;
   display: flex;
   justify-content: center;
   align-items: center;
   height: 100vh;
 }
 
+/* Container Card */
 .container {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.1);
-  padding: 30px 40px;
-  max-width: 420px;
+  background-color: #fff;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  padding: 35px 30px;
   width: 100%;
+  max-width: 440px;
+  transition: all 0.3s ease;
 }
 
+/* Title */
 h1 {
-  font-size: 28px;
-  margin-bottom: 30px;
+  font-size: 26px;
+  font-weight: 700;
   text-align: center;
   color: #222;
+  margin-bottom: 25px;
+  position: relative;
 }
 
 h1::after {
   content: '';
   display: block;
-  width: 80px;
-  height: 4px;
-  background: #ffda03;
-  margin: 8px auto 0;
-  border-radius: 4px;
+  width: 60px;
+  height: 3px;
+  background-color: #4caf50;
+  margin: 10px auto 0;
+  border-radius: 3px;
 }
 
+/* Form Labels */
 label {
   display: block;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
   font-weight: 600;
-  color: #444;
+  font-size: 14px;
+  color: #333;
 }
 
+/* Inputs and Select */
 input, select {
   width: 100%;
-  padding: 12px;
-  border-radius: 8px;
+  padding: 12px 14px;
   border: 1px solid #ccc;
+  border-radius: 10px;
   margin-bottom: 20px;
-  font-size: 14px;
+  font-size: 15px;
+  background-color: #f9f9f9;
+  transition: border-color 0.3s;
 }
 
+input:focus, select:focus {
+  border-color: #4caf50;
+  outline: none;
+  background-color: #fff;
+}
+
+/* Check-in/Check-out Buttons */
 .buttons-row {
   display: flex;
   gap: 12px;
+  margin-bottom: 20px;
 }
 
 .buttons-row button {
   flex: 1;
   padding: 12px;
   border: none;
-  border-radius: 8px;
-  background: #ffda03;
-  font-weight: 600;
+  border-radius: 10px;
+  background-color: #4caf50;
+  color: white;
   font-size: 15px;
+  font-weight: 600;
   cursor: pointer;
-  transition: background 0.3s ease;
+  transition: background-color 0.3s ease;
 }
 
 .buttons-row button:hover {
-  background: #e6c000;
+  background-color: #43a047;
 }
 
+/* View History Button */
 .history-btn {
-  margin-top: 25px;
   width: 100%;
   padding: 12px;
   border: none;
-  border-radius: 8px;
-  background: #ddd;
+  border-radius: 10px;
+  background-color: #607d8b;
+  color: white;
   font-weight: 600;
   font-size: 15px;
   cursor: pointer;
-  transition: background 0.3s ease;
+  transition: background-color 0.3s ease;
 }
 
 .history-btn:hover {
-  background: #ccc;
+  background-color: #546e7a;
 }
 
+/* Status Message */
 #status {
-  margin-top: 20px;
+  margin-top: 15px;
   text-align: center;
   font-size: 14px;
-  color: #444;
+  font-weight: 500;
+  color: #333;
   white-space: pre-wrap;
-  min-height: 22px;
+  min-height: 24px;
 }
 
+/* Attendance History Table */
 #history {
   margin-top: 20px;
   font-size: 13px;
+  color: #333;
+  overflow-x: auto;
+}
+
+#history table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+  font-size: 13px;
+}
+
+#history th, #history td {
+  padding: 10px;
+  border-bottom: 1px solid #ddd;
+  text-align: left;
+}
+
+#history th {
+  background-color: #f1f1f1;
+  font-weight: 600;
 }
