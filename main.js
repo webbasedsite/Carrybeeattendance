@@ -1,4 +1,4 @@
-const webAppUrl = "https://script.google.com/macros/s/AKfycbyPkt34_jOEg8no_k03kuqcfr9bBlmJzYmJrgHX72f3K8fKd5XF7icEwD1LrtHK5rKE/exec"; // Replace with your public Web App URL
+const webAppUrl = "https://script.google.com/macros/s/AKfycbwpvvEDrRGCCS8lYq47kGWyhM-_VbMq3NOpQHiURO4TCM_0IYhl5xnU0Sm_zYsShYZ3/exec";
 
 function handleSubmit(action) {
   const name = document.getElementById("name").value.trim();
