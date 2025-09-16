@@ -1,7 +1,13 @@
+/* Reset some basic elements */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
 body {
   font-family: 'Segoe UI', sans-serif;
-  background: #eef2f5;
-  margin: 0;
+  background: #f4f6f9;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -9,82 +15,94 @@ body {
 }
 
 .container {
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-  padding: 40px;
-  max-width: 420px;
+  background: #ffffff;
+  border-radius: 14px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+  padding: 35px 40px;
   width: 100%;
+  max-width: 480px;
 }
 
 h1 {
-  font-size: 28px;
   text-align: center;
+  font-size: 28px;
   color: #222;
   margin-bottom: 30px;
+}
+
+h1::before {
+  content: '📋 ';
+  font-size: 28px;
 }
 
 h1::after {
   content: '';
   display: block;
   width: 80px;
-  height: 4px;
-  background: #ffda03;
-  margin: 8px auto 0;
-  border-radius: 4px;
+  height: 3px;
+  background: #ffcc00;
+  margin: 10px auto 0;
+  border-radius: 3px;
 }
 
 label {
   display: block;
   margin-bottom: 8px;
   font-weight: 600;
-  color: #444;
+  color: #333;
 }
 
-input, select {
+input,
+select {
   width: 100%;
   padding: 12px;
-  border-radius: 10px;
-  border: 1px solid #ccc;
+  font-size: 14px;
   margin-bottom: 20px;
-  font-size: 15px;
-  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  transition: border 0.3s;
+}
+
+input:focus,
+select:focus {
+  border-color: #ffcc00;
+  outline: none;
 }
 
 .buttons-row {
   display: flex;
   gap: 12px;
+  margin-bottom: 20px;
 }
 
 .buttons-row button {
   flex: 1;
-  padding: 14px;
-  border: none;
-  border-radius: 10px;
+  padding: 12px;
   background: #ffda03;
-  font-weight: 700;
+  color: #111;
   font-size: 15px;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
   cursor: pointer;
-  transition: background 0.3s ease;
-  color: #000;
+  transition: background 0.3s;
 }
 
 .buttons-row button:hover {
-  background: #f2c300;
+  background: #e6c000;
 }
 
 .history-btn {
-  margin-top: 25px;
   width: 100%;
-  padding: 14px;
-  border: none;
-  border-radius: 10px;
+  padding: 12px;
   background: #ddd;
-  font-weight: 700;
+  color: #111;
   font-size: 15px;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
   cursor: pointer;
-  color: #000;
-  transition: background 0.3s ease;
+  margin-bottom: 10px;
 }
 
 .history-btn:hover {
@@ -95,12 +113,28 @@ input, select {
   margin-top: 20px;
   text-align: center;
   font-size: 14px;
-  color: #444;
   white-space: pre-wrap;
-  min-height: 22px;
+  min-height: 24px;
 }
 
 #history {
   margin-top: 20px;
   font-size: 13px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+th, td {
+  padding: 10px;
+  border-bottom: 1px solid #ccc;
+  text-align: left;
+}
+
+th {
+  background: #f9f9f9;
+  font-weight: bold;
 }
