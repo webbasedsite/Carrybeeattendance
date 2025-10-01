@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -53,8 +52,7 @@
       font-size: 1.8rem;
     }
 
-    input[type="text"],
-    input[type="password"] {
+    input[type="text"] {
       width: 100%;
       padding: 14px 12px;
       margin: 10px 0;
@@ -65,8 +63,7 @@
       transition: border-color 0.3s ease;
     }
 
-    input[type="text"]:focus,
-    input[type="password"]:focus {
+    input[type="text"]:focus {
       border-color: #1a54c2;
       box-shadow: 0 0 8px rgba(26,84,194,0.5);
     }
@@ -92,7 +89,7 @@
     }
 
     #status {
-      color: #d8000c; /* error red */
+      color: #d8000c;
       font-weight: 600;
       min-height: 1.2em;
     }
@@ -112,8 +109,7 @@
         font-size: 1rem;
         padding: 12px 0;
       }
-      input[type="text"],
-      input[type="password"] {
+      input[type="text"] {
         font-size: 0.9rem;
       }
     }
@@ -121,12 +117,11 @@
 </head>
 <body>
 
-  <header>Carrybee Attendance</header>
+  <header></header>
 
   <div class="container">
-    <h2>Incharge/Admin Login</h2>
-    <input type="text" id="phone" placeholder="Official ID" autocomplete="off" />
-    <input type="password" id="password" placeholder="Password" autocomplete="off" />
+    <h2>EMPLOYEE ID</h2>
+    <input type="text" id="phone" placeholder="CL-86017" autocomplete="off" required />
     <button onclick="login()">Login</button>
     <p id="status"></p>
   </div>
@@ -136,16 +131,14 @@
 
     function login() {
       const phone = document.getElementById('phone').value.trim();
-      const password = document.getElementById('password').value.trim();
       const status = document.getElementById('status');
 
-      if (!phone || !password) {
-        // Agent message bangla, baki English
+      if (!phone) {
         const role = localStorage.getItem('role');
-        if(role === 'agent') {
-          status.textContent = "দয়া করে ফোন নম্বর ও পাসওয়ার্ড দিন";
+        if (role === 'agent') {
+          status.textContent = "দয়া করে অফিসিয়াল আইডি দিন";
         } else {
-          status.textContent = "Please enter phone & password";
+          status.textContent = "Please enter Official ID";
         }
         return;
       }
@@ -155,12 +148,12 @@
       fetch(webAppUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: `action=login&phone=${encodeURIComponent(phone)}&password=${encodeURIComponent(password)}`
+        body: `action=login&phone=${encodeURIComponent(phone)}`
       })
       .then(response => response.json())
       .then(data => {
         if (data.success) {
-          if(data.role === 'agent'){
+          if (data.role === 'agent') {
             status.textContent = "Agent এখানে লগইন করতে পারবেন না। অনুগ্রহ করে Attendance পেজ ব্যবহার করুন।";
             return;
           }
@@ -170,44 +163,27 @@
           if (data.name) localStorage.setItem('name', data.name);
           if (data.hubName) localStorage.setItem('hubName', data.hubName);
 
-          // Role অনুযায়ী Redirect
-          if (data.role === 'admin') {
-            window.location.href = 'attendance.html';
-          } else if (data.role === 'incharge') {
+          if (data.role === 'admin' || data.role === 'incharge') {
             window.location.href = 'attendance.html';
           } else {
             status.textContent = "Unknown role, login failed.";
           }
         } else {
-          if(data.role === 'agent') {
-            status.textContent = data.message || "কিছু ভুল হয়েছে, আবার চেষ্টা করুন।";
-          } else {
-            status.textContent = data.message || "Login failed.";
-          }
+          status.textContent = data.message || "Login failed.";
         }
       })
       .catch(() => {
-        const role = localStorage.getItem('role');
-        if(role === 'agent') {
-          status.textContent = "লগইন করতে সমস্যা হয়েছে, পরে চেষ্টা করুন।";
-        } else {
-          status.textContent = "Login failed. Please try again later.";
-        }
+        status.textContent = "Login failed. Please try again later.";
       });
     }
 
-    // Enter চাপলে লগইন ফাংশন কল হবে
     document.addEventListener('keydown', function (e) {
       if (e.key === 'Enter') login();
     });
 
-    // ইনপুট পরিবর্তন হলে স্ট্যাটাস ক্লিয়ার
-    ['phone', 'password'].forEach(id => {
-      document.getElementById(id).addEventListener('input', () => {
-        document.getElementById('status').textContent = '';
-      });
+    document.getElementById('phone').addEventListener('input', () => {
+      document.getElementById('status').textContent = '';
     });
   </script>
 </body>
 </html>
-
