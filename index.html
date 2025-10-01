@@ -68,13 +68,7 @@
   <script>
     function selectRole(role) {
       localStorage.setItem('role', role);
-
-      // Agent গেলে সরাসরি attendance.html
-      if (role === 'agent') {
-        window.location.href = 'attendance.html';
-      } else {
-        window.location.href = 'login.html';
-      }
+      window.location.href = 'attendance.html';
     }
   </script>
 </body>
