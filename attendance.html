@@ -5,14 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Attendance - Carrybee Attendance</title>
   <style>
-    /* Your original CSS here unchanged */
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
-
     body, html {
       height: 100%;
       background: #ffffff;
@@ -23,20 +21,17 @@
       align-items: center;
       padding: 20px;
     }
-
     .menu-wrapper {
       position: absolute;
       top: 20px;
       right: 20px;
     }
-
     .menu-btn {
       background: none;
       border: none;
       font-size: 1.5rem;
       cursor: pointer;
     }
-
     .dropdown {
       display: none;
       position: absolute;
@@ -47,7 +42,6 @@
       overflow: hidden;
       z-index: 1;
     }
-
     .dropdown button {
       padding: 10px 20px;
       background: #2575fc;
@@ -58,12 +52,10 @@
       font-size: 0.9rem;
       color: white;
     }
-
     .dropdown button:hover {
       background-color: #f0f0f0;
       color: #2575fc;
     }
-
     .container {
       background: #f0f4ff;
       padding: 30px 40px;
@@ -74,7 +66,6 @@
       text-align: center;
       position: relative;
     }
-
     header {
       font-size: 2.5rem;
       font-weight: 700;
@@ -85,20 +76,17 @@
       border-bottom: 2px solid #FFDF00;
       padding-bottom: 10px;
     }
-
     #welcome {
       font-size: 1.1rem;
       margin: 10px 0;
       color: #2575fc;
       font-weight: 600;
     }
-
     #officeName {
       font-size: 1rem;
       color: #2575fc;
       font-weight: 500;
     }
-
     input[type="text"], select {
       width: 100%;
       padding: 14px 12px;
@@ -108,7 +96,6 @@
       font-size: 1rem;
       outline: none;
     }
-
     button {
       background-color: #2575fc;
       color: white;
@@ -124,17 +111,24 @@
       box-shadow: 0 6px 18px rgba(37,117,252,0.4);
       position: relative;
     }
-
     button:hover {
       background-color: #1a54c2;
     }
-
     #message {
       margin-top: 16px;
       font-weight: 600;
       min-height: 20px;
+      color: red;
     }
-
+    #downloadCSV {
+      margin-top: 20px;
+      background-color: #33a533;
+      box-shadow: 0 6px 18px rgba(51,165,51,0.5);
+      display: none;
+    }
+    #downloadCSV:hover {
+      background-color: #287d28;
+    }
     #loader {
       border: 4px solid #f3f3f3;
       border-top: 4px solid #2575fc;
@@ -146,55 +140,16 @@
       margin: 0 auto;
       margin-top: 10px;
     }
-
     @keyframes spin {
       0% { transform: rotate(0deg);}
       100% { transform: rotate(360deg);}
     }
-
     #infoMessage {
       margin-top: 12px;
       font-size: 0.9rem;
       color: #2575fc;
       font-weight: 600;
       min-height: 20px;
-      max-height: 300px;
-      overflow-y: auto;
-      text-align: left;
-    }
-
-    /* Scrollbar for infoMessage */
-    #infoMessage::-webkit-scrollbar {
-      width: 8px;
-    }
-
-    #infoMessage::-webkit-scrollbar-thumb {
-      background-color: #2575fc;
-      border-radius: 4px;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 12px;
-    }
-
-    th, td {
-      border: 1px solid #ccc;
-      padding: 8px;
-      font-size: 0.9rem;
-    }
-
-    th {
-      background-color: #2575fc;
-      color: white;
-      position: sticky;
-      top: 0;
-      z-index: 2;
-    }
-
-    tbody tr:nth-child(even) {
-      background-color: #eaf0ff;
     }
   </style>
 </head>
@@ -204,14 +159,13 @@
     <button class="menu-btn" onclick="toggleMenu()">⋮</button>
     <div class="dropdown" id="dropdownMenu">
       <button id="viewHistoryOption">📜 View History</button>
-      <!-- other menu buttons hidden or shown depending on role -->
     </div>
   </div>
 
   <div class="container">
-    <header>Carrybee Attendance</header>
-    <div id="welcome">Welcome User</div>
-    <p id="officeName">Office: Unknown Office</p>
+    <header>Attendance</header>
+    <div id="welcome"></div>
+    <p id="officeName"></p>
 
     <h2>Mark Attendance</h2>
     <input type="text" id="employeeId" placeholder="Official ID" />
@@ -225,166 +179,141 @@
 
     <div id="loader"></div>
     <div id="message"></div>
+
+    <button id="downloadCSV">Download My CSV</button>
     <div id="infoMessage"></div>
   </div>
 
-  <script>
-    function toggleMenu() {
-      const menu = document.getElementById('dropdownMenu');
-      menu.style.display = (menu.style.display === 'block') ? 'none' : 'block';
-    }
+<script>
+  const webAppUrl = "https://script.google.com/macros/s/AKfycbxUoQ_Fn0DnPUK_pcMBzrdxd4kb433pDSHGt1nrLZBUtRGdHmFKI7IZOCMNBvbn19xD/exec";
 
-    function showMessage(msg, success = false) {
-      const messageEl = document.getElementById('message');
-      messageEl.style.color = success ? 'green' : 'red';
-      messageEl.textContent = msg;
-    }
+  // Toggle dropdown menu
+  function toggleMenu() {
+    const menu = document.getElementById('dropdownMenu');
+    menu.style.display = (menu.style.display === 'block') ? 'none' : 'block';
+  }
 
-    function setLoading(isLoading) {
-      const loader = document.getElementById('loader');
-      loader.style.display = isLoading ? 'block' : 'none';
-    }
+  function showMessage(msg, success = false) {
+    const messageEl = document.getElementById('message');
+    messageEl.style.color = success ? 'green' : 'red';
+    messageEl.textContent = msg;
+  }
 
-    async function submitToGoogleForm(data) {
-      // TODO: Replace the below URL with your Google Form's POST URL
-      const googleFormPostUrl = "https://docs.google.com/forms/d/e/1jmVgSoa6FLda8ldD0KOKgU1bVJw5FIiMv0ItUx6IQ4s/formResponse";
+  function setLoading(isLoading) {
+    const loader = document.getElementById('loader');
+    loader.style.display = isLoading ? 'block' : 'none';
+  }
 
-      // TODO: Replace these entry IDs with your form's entry IDs
-      const formData = new URLSearchParams();
-      formData.append('entry.337895578', data.employeeId); // Employee ID field
-      formData.append('entry.1795643623', data.shift);      // Shift field
-      formData.append('entry.1065701290', data.action);     // Action field (Check-In/Check-Out)
-      formData.append('entry.806083254', data.latitude);   // Latitude field
-      formData.append('entry.1550871066', data.longitude);  // Longitude field
+  // Validate Employee ID / Phone exists
+  async function validateAgentPhone(phone) {
+    if (!phone) return false;
+    try {
+      const params = new URLSearchParams({ action: 'getAllEmployees' });
+      const res = await fetch(webAppUrl + "?" + params.toString(), { method: "POST" });
+      const data = await res.json();
 
-      try {
-        await fetch(googleFormPostUrl, {
-          method: 'POST',
-          mode: 'no-cors',  // Google Forms disallow CORS, so use no-cors
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-          body: formData.toString()
+      if (data.success && Array.isArray(data.employees)) {
+        const normalizedInput = phone.replace(/\D/g, '');
+        return data.employees.some(emp => {
+          const normalizedEmpPhone = (emp.phone || "").toString().replace(/\D/g, '');
+          return normalizedEmpPhone === normalizedInput;
         });
-        return true; // Assume success
-      } catch (error) {
-        console.error("Error submitting to Google Form:", error);
-        return false;
       }
+      return false;
+    } catch (e) {
+      console.error("Failed to validate phone:", e);
+      return false;
     }
+  }
 
-    async function markAttendance(action) {
-      showMessage('');
-      setLoading(false);
-
-      const employeeId = document.getElementById('employeeId').value.trim();
-      const shift = document.getElementById('shiftSelect').value;
-
-      if (!employeeId) {
-        return showMessage("Please enter your Employee ID");
-      }
-
-      if (!navigator.geolocation) {
-        return showMessage("Geolocation not supported");
-      }
-
-      showMessage("Getting location...");
-      setLoading(true);
-
-      navigator.geolocation.getCurrentPosition(async (position) => {
-        const data = {
-          employeeId,
-          shift,
-          action,
-          latitude: position.coords.latitude.toString(),
-          longitude: position.coords.longitude.toString()
-        };
-
-        const success = await submitToGoogleForm(data);
-        setLoading(false);
-
-        if (success) {
-          showMessage(`${action} recorded successfully!`, true);
-        } else {
-          showMessage(`Failed to record ${action}. Please try again.`);
-        }
-      }, (error) => {
-        setLoading(false);
-        showMessage("Location permission is required");
-        console.warn("Geolocation error:", error);
+  // Check if user already checked in/out today
+  async function hasAlreadyChecked(phone, action) {
+    try {
+      const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+      const params = new URLSearchParams({
+        action: 'checkAttendance',
+        phone: phone,
+        date: today,
+        attendanceType: action
       });
+
+      const res = await fetch(webAppUrl + '?' + params.toString(), { method: 'POST' });
+      const data = await res.json();
+      return data.exists === true;
+    } catch (e) {
+      console.error('Error checking attendance:', e);
+      return false;  // fail-safe: allow marking if error occurs
+    }
+  }
+
+  // Mark attendance (Check-In or Check-Out)
+  async function markAttendance(action) {
+    showMessage('');
+    setLoading(false);
+
+    const phone = document.getElementById('employeeId').value.trim();
+    const shift = document.getElementById('shiftSelect').value;
+
+    if (!phone) {
+      return showMessage("Please enter your Employee Phone or ID");
     }
 
-    window.onload = () => {
-      // Optionally set welcome and office info from localStorage or defaults
-      const name = localStorage.getItem('name') || 'User';
-      const hubName = localStorage.getItem('hubName') || 'Unknown Office';
-      const phone = localStorage.getItem('phone') || '';
+    showMessage("Validating Employee ID...");
+    const validPhone = await validateAgentPhone(phone);
+    if (!validPhone) {
+      return showMessage("Invalid Employee Phone or ID. Please check and try again.");
+    }
 
-      document.getElementById('employeeId').value = phone;
-      document.getElementById('welcome').textContent = `Welcome ${name}`;
-      document.getElementById('officeName').textContent = `Office: ${hubName}`;
-    };
+    showMessage(`Checking if already ${action} today...`);
+    setLoading(true);
+    const alreadyMarked = await hasAlreadyChecked(phone, action);
+    setLoading(false);
 
-    document.getElementById('checkInBtn').onclick = () => markAttendance('Check-In');
-    document.getElementById('checkOutBtn').onclick = () => markAttendance('Check-Out');
+    if (alreadyMarked) {
+      return showMessage(`You have already performed ${action} today.`);
+    }
 
-    // Hide menu if clicked outside
-    window.onclick = function(event) {
-      if (!event.target.matches('.menu-btn')) {
-        const dropdown = document.getElementById('dropdownMenu');
-        if (dropdown.style.display === 'block') {
-          dropdown.style.display = 'none';
-        }
-      }
-    };
+    if (!navigator.geolocation) return showMessage("Geolocation not supported");
 
-    // Fetch and show history when clicked
-    document.getElementById('viewHistoryOption').addEventListener('click', async () => {
-      const dropdown = document.getElementById('dropdownMenu');
-      dropdown.style.display = 'none'; // hide menu
+    showMessage("Getting location...");
+    setLoading(true);
 
-      const infoMessage = document.getElementById('infoMessage');
-      const message = document.getElementById('message');
-      message.textContent = ''; // clear any previous message
-
-      infoMessage.textContent = 'Loading history...';
-
-      // Replace with your Google Apps Script Web App URL here:
-      const webAppUrl = 'https://script.google.com/macros/s/AKfycbwpvvEDrRGCCS8lYq47kGWyhM-_VbMq3NOpQHiURO4TCM_0IYhl5xnU0Sm_zYsShYZ3/exec';
+    navigator.geolocation.getCurrentPosition(async (position) => {
+      const params = new URLSearchParams({
+        action: action,
+        phone: phone,
+        shift: shift,
+        latitude: position.coords.latitude,
+        longitude: position.coords.longitude,
+        timestamp: new Date().toISOString()
+      });
 
       try {
-        const response = await fetch(webAppUrl);
+        const response = await fetch(webAppUrl + "?" + params.toString(), { method: "POST" });
         const data = await response.json();
+        setLoading(false);
 
-        if (data.length === 0) {
-          infoMessage.textContent = 'No attendance records found.';
-          return;
+        if (data.success) {
+          showMessage(`${action} successful!`, true);
+        } else {
+          showMessage(data.message || `${action} failed!`);
         }
-
-        // Build table to display data
-        let tableHTML = `<table>
-          <thead>
-            <tr>
-              ${Object.keys(data[0]).map(key => `<th>${key}</th>`).join('')}
-            </tr>
-          </thead>
-          <tbody>
-            ${data.map(row => `
-              <tr>
-                ${Object.values(row).map(val => `<td>${val}</td>`).join('')}
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>`;
-
-        infoMessage.innerHTML = tableHTML;
-
-      } catch (err) {
-        console.error(err);
-        infoMessage.textContent = 'Failed to load attendance history.';
+      } catch (e) {
+        setLoading(false);
+        showMessage(`Error: ${e.message || e}`);
+        console.error("Attendance submission error:", e);
       }
+    }, (error) => {
+      setLoading(false);
+      showMessage("Location permission is required");
+      console.warn("Geolocation error:", error);
     });
-  </script>
+  }
+
+  // Event listeners for buttons
+  document.getElementById('checkInBtn').addEventListener('click', () => markAttendance('checkIn'));
+  document.getElementById('checkOutBtn').addEventListener('click', () => markAttendance('checkOut'));
+</script>
+
 </body>
 </html>
