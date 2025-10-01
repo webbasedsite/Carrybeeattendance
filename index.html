@@ -61,14 +61,16 @@
 <body>
   <h1>Carrybee Attendance System</h1>
   <div class="roles">
-    <button onclick="selectRole('incharge')">Incharge</button>
-    <button onclick="selectRole('agent')">Agent</button>
+    <button onclick="selectRole('Outbound')">Outbound</button>
+    <button onclick="selectRole('Inbound')">Inbound</button>
   </div>
 
   <script>
     function selectRole(role) {
       localStorage.setItem('role', role);
-      window.location.href = 'attendance.html';
+
+      // For both agent and incharge go to ID page
+      window.location.href = 'id.html';
     }
   </script>
 </body>
