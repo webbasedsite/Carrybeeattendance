@@ -319,57 +319,80 @@ input:focus, select:focus {
     loadUser();
 
     async function submitAttendance(action) {
-      const empId = empInput.value.trim();
-      const emp = allEmployees.find(e => e.empId === empId);
+  const empId = empInput.value.trim();
+  const emp = allEmployees.find(e => e.empId === empId);
 
-      if (!emp) {
-        statusEl.textContent = "Invalid Employee ID";
-        return;
-      }
+  if (!emp) {
+    statusEl.textContent = "Invalid Employee ID";
+    return;
+  }
 
-      const shift = shiftSelect.value;
-      if (!shiftOptions[emp.role.toLowerCase()].includes(shift)) {
-        statusEl.textContent = `Shift not allowed for role: ${emp.role}`;
-        return;
-      }
+  const shift = shiftSelect.value;
+  if (!shiftOptions[emp.role.toLowerCase()].includes(shift)) {
+    statusEl.textContent = `Shift not allowed for role: ${emp.role}`;
+    return;
+  }
 
-      // Disable buttons
-      checkInBtn.disabled = true;
-      checkOutBtn.disabled = true;
-      statusEl.innerHTML = `${action} in progress <span class="spinner"></span>`;
+  // Disable buttons
+  checkInBtn.disabled = true;
+  checkOutBtn.disabled = true;
+  statusEl.innerHTML = `${action} in progress <span class="spinner"></span>`;
 
-      const timestamp = new Date().toISOString();
+  const timestamp = new Date().toISOString();
 
-      navigator.geolocation.getCurrentPosition(async (pos) => {
-        try {
-          const resp = await fetch(webAppUrl, {
-            method: "POST",
-            headers: { "Content-Type": "application/x-www-form-urlencoded" },
-            body: `action=${action}&empId=${encodeURIComponent(empId)}&shift=${encodeURIComponent(shift)}&latitude=${pos.coords.latitude}&longitude=${pos.coords.longitude}&timestamp=${timestamp}`
-          });
-          const data = await resp.json();
+  navigator.geolocation.getCurrentPosition(async (pos) => {
+    const lat = pos.coords.latitude;
+    const lon = pos.coords.longitude;
 
-          if (data.success) {
-            statusEl.style.color = "green";
-            statusEl.textContent = `${action} successful`;
-            saveUser(emp);
-          } else {
-            statusEl.style.color = "#d8000c";
-            statusEl.textContent = data.message || `${action} failed`;
-          }
-        } catch {
-          statusEl.style.color = "#d8000c";
-          statusEl.textContent = "Error submitting attendance";
-        } finally {
-          checkInBtn.disabled = false;
-          checkOutBtn.disabled = false;
-        }
-      }, () => {
-        statusEl.textContent = "Location access denied or unavailable";
-        checkInBtn.disabled = false;
-        checkOutBtn.disabled = false;
-      });
+    // 🔍 First validate location before submitting attendance
+    const validateResp = await fetch(webAppUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: `action=validateLocation&empId=${encodeURIComponent(empId)}&latitude=${lat}&longitude=${lon}`
+    });
+
+    const validateData = await validateResp.json();
+
+    if (!validateData.success) {
+      statusEl.style.color = "#d8000c";
+      statusEl.textContent = validateData.message || "You are not at the office.";
+      checkInBtn.disabled = false;
+      checkOutBtn.disabled = false;
+      return;
     }
+
+    // ✅ Location valid, proceed with attendance
+    try {
+      const resp = await fetch(webAppUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: `action=${action}&empId=${encodeURIComponent(empId)}&shift=${encodeURIComponent(shift)}&latitude=${lat}&longitude=${lon}&timestamp=${timestamp}`
+      });
+      const data = await resp.json();
+
+      if (data.success) {
+        statusEl.style.color = "green";
+        statusEl.textContent = `${action} successful`;
+        saveUser(emp);
+      } else {
+        statusEl.style.color = "#d8000c";
+        statusEl.textContent = data.message || `${action} failed`;
+      }
+    } catch {
+      statusEl.style.color = "#d8000c";
+      statusEl.textContent = "Error submitting attendance";
+    } finally {
+      checkInBtn.disabled = false;
+      checkOutBtn.disabled = false;
+    }
+
+  }, () => {
+    statusEl.textContent = "Location access denied or unavailable";
+    checkInBtn.disabled = false;
+    checkOutBtn.disabled = false;
+  });
+}
+
 
     // --- HISTORY FUNCTIONS ---
     async function viewHistory() {
