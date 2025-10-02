@@ -26,7 +26,7 @@
       display: flex;
       gap: 30px;
       flex-wrap: wrap;
-      justify-content: center;
+      justify-content:center;
     }
 
     button {
@@ -59,18 +59,16 @@
   </style>
 </head>
 <body>
-  <h1>Carrybee Attendance System</h1>
+  <h1>Carrybee Attendance</h1>
   <div class="roles">
-    <button onclick="selectRole('Outbound')">Outbound</button>
-    <button onclick="selectRole('Inbound')">Inbound</button>
+    <button onclick="selectRole('outbound')">Outbound</button>
+    <button onclick="selectRole('inbound')">Inbound</button>
   </div>
 
   <script>
     function selectRole(role) {
       localStorage.setItem('role', role);
-
-      // For both agent and incharge go to ID page
-      window.location.href = 'id.html';
+      window.location.href = 'attendance.html';
     }
   </script>
 </body>
