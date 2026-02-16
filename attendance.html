@@ -175,7 +175,7 @@ th { background:#2575fc; color:white;}
 </div>
 
 <script>
-const webAppUrl = "https://script.google.com/macros/s/AKfycbwP4d7VWkx5NDDAtzbQ3WsaaR87bJhNLWXeUcxTXeRwR1Hf8inOvwNq5Y3wGmtmhRMF/exec";
+const webAppUrl = "https://script.google.com/macros/s/AKfycbykIVyUfbm51lN4kO3clZdEuBhZ59waAUTICt35iwKz7kEQQLDVZUt9Kwu4aTsaCLKF/exec";
 
 const empInput = document.getElementById("empId");
 const shiftSelect = document.getElementById("shift");
@@ -195,6 +195,7 @@ const shiftOptions = {
 document.getElementById("darkModeToggle")
   .addEventListener("click",()=>document.body.classList.toggle("dark-mode"));
 
+// ================== FETCH EMPLOYEES ===================
 async function fetchEmployees(){
   const resp = await fetch(webAppUrl,{
     method:"POST",
@@ -206,7 +207,49 @@ async function fetchEmployees(){
 }
 fetchEmployees();
 
-empInput.addEventListener("input",()=>{
+// ================== LOCK EMPLOYEE ID ===================
+const storedEmpId = localStorage.getItem('empId');
+if(storedEmpId){
+  empInput.value = storedEmpId;
+  empInput.disabled = true;
+  checkInBtn.disabled = false;
+  // Load shifts automatically for stored emp
+  const emp = allEmployees.find(e=>e.empId===storedEmpId);
+  if(emp){
+    shiftSelect.innerHTML="";
+    shiftOptions[emp.role.toLowerCase()].forEach(s=>{
+      const opt=document.createElement("option");
+      opt.value=s; opt.textContent=s;
+      shiftSelect.appendChild(opt);
+    });
+  }
+}
+
+// Save ID on first input
+empInput.addEventListener("change", () => {
+  const val = empInput.value.trim();
+  if(val){
+    localStorage.setItem('empId', val);
+    empInput.disabled = true;
+    checkInBtn.disabled = false;
+
+    const emp = allEmployees.find(e=>e.empId===val);
+    if(emp){
+      shiftSelect.innerHTML="";
+      shiftOptions[emp.role.toLowerCase()].forEach(s=>{
+        const opt=document.createElement("option");
+        opt.value=s; opt.textContent=s;
+        shiftSelect.appendChild(opt);
+      });
+    }
+
+    alert("Employee ID saved: " + val);
+  }
+});
+
+// ================== UPDATE SHIFT ON TYPING ===================
+empInput.addEventListener("input",()=> {
+  if(empInput.disabled) return; // Do nothing if locked
   const emp = allEmployees.find(e=>e.empId===empInput.value.trim());
   shiftSelect.innerHTML="";
   if(emp){
@@ -218,8 +261,8 @@ empInput.addEventListener("input",()=>{
   }
 });
 
+// ================== SUBMIT ATTENDANCE ===================
 async function submitAttendance(action){
-
   const empId = empInput.value.trim();
   const shift = shiftSelect.value;
   if(!empId || !shift){ statusEl.textContent="Fill all fields"; return; }
@@ -243,11 +286,8 @@ async function submitAttendance(action){
         statusEl.textContent=data.message;
         showSuccess(data.message);
 
-        if(action==="Check-In")
-          checkOutBtn.disabled=false;
-
-        if(action==="Check-Out")
-          checkOutBtn.disabled=true;
+        if(action==="Check-In") checkOutBtn.disabled=false;
+        if(action==="Check-Out") checkOutBtn.disabled=true;
 
       }else{
         statusEl.style.color="red";
@@ -258,23 +298,24 @@ async function submitAttendance(action){
       statusEl.textContent="Server Error";
     }
 
-    checkInBtn.disabled=false;
-    if(action==="Check-In") checkOutBtn.disabled=false;
+    if(action==="Check-In") checkInBtn.disabled=false;
+    if(action==="Check-Out") checkInBtn.disabled=false;
 
-  },()=>{
+  },()=> {
     statusEl.textContent="Location permission required";
     checkInBtn.disabled=false;
   });
 }
 
+// ================== SUCCESS ANIMATION ===================
 function showSuccess(msg){
   successAnim.textContent="✔ " + msg;
   successAnim.classList.add("show");
   setTimeout(()=>successAnim.classList.remove("show"),2000);
 }
 
+// ================== HISTORY MODAL ===================
 const modal = document.getElementById("historyModal");
-
 function closeHistory(){ modal.style.display="none"; }
 
 async function viewHistory(){
@@ -313,6 +354,7 @@ async function viewHistory(){
   document.getElementById("historyContent").innerHTML=html;
 }
 
+// ================== DOWNLOAD HISTORY ===================
 function downloadHistory(){
   if(!historyData.length) return alert("No history");
 
