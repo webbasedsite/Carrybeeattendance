@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Carrybee Attendance</title>
-
 <style>
 body, html {
   margin:0; padding:0;
@@ -14,9 +13,7 @@ body, html {
   align-items:center; padding:20px;
   transition:0.3s;
 }
-
 .dark-mode { background:#121212; color:#f5f7fa; }
-
 header {
   font-size:2rem; font-weight:700;
   margin-bottom:15px; color:#2575fc;
@@ -25,7 +22,6 @@ header {
   width:100%; max-width:380px;
   text-align:center;
 }
-
 nav {
   background:#2575fc; color:white;
   width:100%; max-width:380px;
@@ -33,19 +29,16 @@ nav {
   justify-content:space-around;
   border-radius:8px; margin-bottom:20px;
 }
-
 nav button {
   background:none; border:none;
   color:white; font-weight:600;
   cursor:pointer;
 }
-
 #darkModeToggle {
   background:#6a11cb;
   padding:5px 10px;
   border-radius:6px;
 }
-
 .container {
   background:white; padding:25px 30px;
   border-radius:15px;
@@ -53,23 +46,14 @@ nav button {
   max-width:380px; width:100%;
   transition:0.3s;
 }
-
-.dark-mode .container {
-  background:#1e1e1e;
-}
-
-label {
-  font-weight:600; color:#2575fc;
-  display:block; margin-bottom:6px;
-}
-
+.dark-mode .container { background:#1e1e1e; }
+label { font-weight:600; color:#2575fc; display:block; margin-bottom:6px; }
 input, select {
   width:100%; padding:10px;
   border-radius:10px;
   border:2px solid #2575fc;
   margin-bottom:15px;
 }
-
 button.action-btn {
   background:#2575fc;
   color:white; border:none;
@@ -80,11 +64,8 @@ button.action-btn {
   cursor:pointer;
   margin-top:5px;
 }
-
 button:disabled { opacity:0.6; cursor:not-allowed; }
-
 #status { margin-top:15px; font-weight:600; }
-
 .success-animation {
   position:fixed; top:20%;
   left:50%; transform:translateX(-50%);
@@ -94,9 +75,7 @@ button:disabled { opacity:0.6; cursor:not-allowed; }
   opacity:0; transition:0.4s;
   font-weight:600;
 }
-
 .success-animation.show { opacity:1; }
-
 .modal {
   display:none;
   position:fixed;
@@ -105,7 +84,6 @@ button:disabled { opacity:0.6; cursor:not-allowed; }
   justify-content:center;
   align-items:center;
 }
-
 .modal-content {
   background:white;
   padding:20px;
@@ -114,11 +92,7 @@ button:disabled { opacity:0.6; cursor:not-allowed; }
   overflow-y:auto;
   width:90%; max-width:600px;
 }
-
-.dark-mode .modal-content {
-  background:#1e1e1e;
-}
-
+.dark-mode .modal-content { background:#1e1e1e; }
 .close-btn {
   float:right;
   background:red;
@@ -135,46 +109,36 @@ th { background:#2575fc; color:white;}
 </head>
 
 <body>
-
 <header>Carrybee Attendance</header>
 
 <nav>
-  <button onclick="viewHistory()">History</button>
-  <button onclick="downloadHistory()">Download</button>
+  <button id="historyBtn">History</button>
+  <button id="downloadBtn">Download</button>
   <button id="darkModeToggle">🌙</button>
 </nav>
 
 <div class="container">
-
   <label>Employee ID</label>
   <input type="text" id="empId" placeholder="CL-86017">
 
   <label>Shift</label>
-<select id="shift">
-  <option value="">Select Shift</option>
-  <option value="Morning">Morning</option>
-  <option value="Evening">Evening</option>
-  <option value="Night">Night</option>
-</select>
+  <select id="shift">
+    <option value="">Select Shift</option>
+    <option value="Morning">Morning</option>
+    <option value="Evening">Evening</option>
+    <option value="Night">Night</option>
+  </select>
 
-
-  <button class="action-btn" id="checkInBtn"
-    onclick="submitAttendance('Check-In')">Check In</button>
-
-  <button class="action-btn" id="checkOutBtn"
-    onclick="submitAttendance('Check-Out')" disabled>
-    Check Out
-  </button>
-
+  <button class="action-btn" id="checkInBtn">Check In</button>
+  <button class="action-btn" id="checkOutBtn" disabled>Check Out</button>
   <div id="status"></div>
 </div>
 
 <div id="successAnim" class="success-animation"></div>
 
-<!-- HISTORY -->
 <div id="historyModal" class="modal">
   <div class="modal-content">
-    <button class="close-btn" onclick="closeHistory()">Close</button>
+    <button class="close-btn" id="closeHistory">Close</button>
     <h3>Attendance History</h3>
     <div id="historyContent"></div>
   </div>
@@ -183,199 +147,144 @@ th { background:#2575fc; color:white;}
 <script>
 const webAppUrl = "https://script.google.com/macros/s/AKfycbykIVyUfbm51lN4kO3clZdEuBhZ59waAUTICt35iwKz7kEQQLDVZUt9Kwu4aTsaCLKF/exec";
 
-const empInput = document.getElementById("empId");
-const shiftSelect = document.getElementById("shift");
-const statusEl = document.getElementById("status");
-const checkInBtn = document.getElementById("checkInBtn");
-const checkOutBtn = document.getElementById("checkOutBtn");
-const successAnim = document.getElementById("successAnim");
+window.onload = function() {
+  const empInput = document.getElementById("empId");
+  const shiftSelect = document.getElementById("shift");
+  const statusEl = document.getElementById("status");
+  const checkInBtn = document.getElementById("checkInBtn");
+  const checkOutBtn = document.getElementById("checkOutBtn");
+  const successAnim = document.getElementById("successAnim");
+  const historyBtn = document.getElementById("historyBtn");
+  const downloadBtn = document.getElementById("downloadBtn");
+  const closeHistoryBtn = document.getElementById("closeHistory");
+  const modal = document.getElementById("historyModal");
+  let historyData = [];
 
-let allEmployees = [];
-let historyData = [];
+  document.getElementById("darkModeToggle")
+    .addEventListener("click",()=>document.body.classList.toggle("dark-mode"));
 
-const shiftOptions = {
-  inbound:["Night"],
-  outbound:["Morning","Evening"]
-};
-
-document.getElementById("darkModeToggle")
-  .addEventListener("click",()=>document.body.classList.toggle("dark-mode"));
-
-// ================== FETCH EMPLOYEES ===================
-async function fetchEmployees(){
-  const resp = await fetch(webAppUrl,{
-    method:"POST",
-    headers:{"Content-Type":"application/x-www-form-urlencoded"},
-    body:"action=getAllEmployees"
-  });
-  const data = await resp.json();
-  if(data.success) allEmployees = data.employees;
-}
-fetchEmployees();
-
-// ================== LOCK EMPLOYEE ID ===================
-const storedEmpId = localStorage.getItem('empId');
-if(storedEmpId){
-  empInput.value = storedEmpId;
-  empInput.disabled = true;
-  checkInBtn.disabled = false;
-  // Load shifts automatically for stored emp
-  const emp = allEmployees.find(e=>e.empId===storedEmpId);
-if(emp){
-  shiftSelect.innerHTML="";
-  shiftOptions[emp.role.toLowerCase()].forEach(s=>{
-    const opt=document.createElement("option");
-    opt.value=s; opt.textContent=s;
-    shiftSelect.appendChild(opt);
-  });
-}
-
-
-// Save ID on first input
-empInput.addEventListener("change", () => {
-  const val = empInput.value.trim();
-  if(val){
-    localStorage.setItem('empId', val);
+  // Lock Employee ID if previously entered
+  const storedEmpId = localStorage.getItem('empId');
+  if(storedEmpId){
+    empInput.value = storedEmpId;
     empInput.disabled = true;
     checkInBtn.disabled = false;
+  }
 
-    const emp = allEmployees.find(e=>e.empId===val);
-    if(emp){
-      shiftSelect.innerHTML="";
-      shiftOptions[emp.role.toLowerCase()].forEach(s=>{
-        const opt=document.createElement("option");
-        opt.value=s; opt.textContent=s;
-        shiftSelect.appendChild(opt);
-      });
+  // Save Employee ID on first input
+  empInput.addEventListener("change", () => {
+    const val = empInput.value.trim();
+    if(val){
+      localStorage.setItem('empId', val);
+      empInput.disabled = true;
+      checkInBtn.disabled = false;
+      alert("Employee ID saved: " + val);
     }
+  });
 
-    alert("Employee ID saved: " + val);
-  }
-});
+  // Submit Attendance
+  async function submitAttendance(action){
+    const empId = empInput.value.trim();
+    const shift = shiftSelect.value;
+    if(!empId || !shift){ statusEl.textContent="Fill all fields"; return; }
 
-// ================== UPDATE SHIFT ON TYPING ===================
-empInput.addEventListener("input",()=> {
-  if(empInput.disabled) return; // Do nothing if locked
-  const emp = allEmployees.find(e=>e.empId===empInput.value.trim());
-  shiftSelect.innerHTML="";
-  if(emp){
-    shiftOptions[emp.role.toLowerCase()].forEach(s=>{
-      const opt=document.createElement("option");
-      opt.value=s; opt.textContent=s;
-      shiftSelect.appendChild(opt);
-    });
-  }
-});
+    checkInBtn.disabled=true;
+    checkOutBtn.disabled=true;
+    statusEl.textContent="Processing...";
 
-// ================== SUBMIT ATTENDANCE ===================
-async function submitAttendance(action){
-  const empId = empInput.value.trim();
-  const shift = shiftSelect.value;
-  if(!empId || !shift){ statusEl.textContent="Fill all fields"; return; }
+    navigator.geolocation.getCurrentPosition(async pos=>{
+      try{
+        const resp = await fetch(webAppUrl,{
+          method:"POST",
+          headers:{"Content-Type":"application/x-www-form-urlencoded"},
+          body:`action=${action}&empId=${empId}&shift=${shift}&latitude=${pos.coords.latitude}&longitude=${pos.coords.longitude}&timestamp=${new Date().toISOString()}`
+        });
 
-  checkInBtn.disabled=true;
-  checkOutBtn.disabled=true;
-  statusEl.textContent="Processing...";
+        const data = await resp.json();
 
-  navigator.geolocation.getCurrentPosition(async pos=>{
-    try{
-      const resp = await fetch(webAppUrl,{
-        method:"POST",
-        headers:{"Content-Type":"application/x-www-form-urlencoded"},
-        body:`action=${action}&empId=${empId}&shift=${shift}&latitude=${pos.coords.latitude}&longitude=${pos.coords.longitude}&timestamp=${new Date().toISOString()}`
-      });
+        if(data.success){
+          statusEl.style.color="green";
+          statusEl.textContent=data.message;
+          showSuccess(data.message);
+          if(action==="Check-In") checkOutBtn.disabled=false;
+          if(action==="Check-Out") checkOutBtn.disabled=true;
+        }else{
+          statusEl.style.color="red";
+          statusEl.textContent=data.message;
+        }
 
-      const data = await resp.json();
-
-      if(data.success){
-        statusEl.style.color="green";
-        statusEl.textContent=data.message;
-        showSuccess(data.message);
-
-        if(action==="Check-In") checkOutBtn.disabled=false;
-        if(action==="Check-Out") checkOutBtn.disabled=true;
-
-      }else{
-        statusEl.style.color="red";
-        statusEl.textContent=data.message;
+      }catch{
+        statusEl.textContent="Server Error";
       }
 
-    }catch{
-      statusEl.textContent="Server Error";
-    }
+      if(action==="Check-In") checkInBtn.disabled=false;
+      if(action==="Check-Out") checkInBtn.disabled=false;
 
-    if(action==="Check-In") checkInBtn.disabled=false;
-    if(action==="Check-Out") checkInBtn.disabled=false;
-
-  },()=> {
-    statusEl.textContent="Location permission required";
-    checkInBtn.disabled=false;
-  });
-}
-
-// ================== SUCCESS ANIMATION ===================
-function showSuccess(msg){
-  successAnim.textContent="✔ " + msg;
-  successAnim.classList.add("show");
-  setTimeout(()=>successAnim.classList.remove("show"),2000);
-}
-
-// ================== HISTORY MODAL ===================
-const modal = document.getElementById("historyModal");
-function closeHistory(){ modal.style.display="none"; }
-
-async function viewHistory(){
-  const empId = empInput.value.trim();
-  if(!empId) return alert("Enter ID first");
-
-  modal.style.display="flex";
-  document.getElementById("historyContent").innerHTML="Loading...";
-
-  const resp = await fetch(webAppUrl,{
-    method:"POST",
-    headers:{"Content-Type":"application/x-www-form-urlencoded"},
-    body:`action=getHistory&empId=${empId}`
-  });
-
-  const data = await resp.json();
-  if(!data.success || !data.history.length){
-    document.getElementById("historyContent").innerHTML="No records found";
-    return;
+    },()=> {
+      statusEl.textContent="Location permission required";
+      checkInBtn.disabled=false;
+    });
   }
 
-  historyData = data.history;
+  checkInBtn.addEventListener("click", ()=>submitAttendance("Check-In"));
+  checkOutBtn.addEventListener("click", ()=>submitAttendance("Check-Out"));
 
-  let html="<table><tr><th>Date</th><th>Office</th><th>Time</th><th>Work</th></tr>";
+  // Success animation
+  function showSuccess(msg){
+    successAnim.textContent="✔ " + msg;
+    successAnim.classList.add("show");
+    setTimeout(()=>successAnim.classList.remove("show"),2000);
+  }
 
-  data.history.forEach(r=>{
-    html+=`<tr>
-      <td>${r.date||""}</td>
-      <td>IN: ${r.checkInOffice||""}<br>OUT: ${r.checkOutOffice||""}</td>
-      <td>IN: ${r.checkInTime||""}<br>OUT: ${r.checkOutTime||""}</td>
-      <td>${r.workDuration||""}</td>
-    </tr>`;
+  // History modal
+  function viewHistory(){
+    const empId = empInput.value.trim();
+    if(!empId) return alert("Enter ID first");
+    modal.style.display="flex";
+    document.getElementById("historyContent").innerHTML="Loading...";
+
+    fetch(webAppUrl,{
+      method:"POST",
+      headers:{"Content-Type":"application/x-www-form-urlencoded"},
+      body:`action=getHistory&empId=${empId}`
+    }).then(r=>r.json()).then(data=>{
+      if(!data.success || !data.history.length){
+        document.getElementById("historyContent").innerHTML="No records found";
+        return;
+      }
+      historyData = data.history;
+      let html="<table><tr><th>Date</th><th>Office</th><th>Time</th><th>Work</th></tr>";
+      data.history.forEach(r=>{
+        html+=`<tr>
+          <td>${r.date||""}</td>
+          <td>IN: ${r.checkInOffice||""}<br>OUT: ${r.checkOutOffice||""}</td>
+          <td>IN: ${r.checkInTime||""}<br>OUT: ${r.checkOutTime||""}</td>
+          <td>${r.workDuration||""}</td>
+        </tr>`;
+      });
+      html+="</table>";
+      document.getElementById("historyContent").innerHTML=html;
+    });
+  }
+
+  historyBtn.addEventListener("click", viewHistory);
+  closeHistoryBtn.addEventListener("click", ()=> modal.style.display="none");
+
+  // Download history
+  downloadBtn.addEventListener("click", ()=>{
+    if(!historyData.length) return alert("No history");
+    let csv="Date,CheckInOffice,CheckOutOffice,WorkDuration\n";
+    historyData.forEach(r=>{
+      csv+=`${r.date},${r.checkInOffice},${r.checkOutOffice},${r.workDuration}\n`;
+    });
+    const blob=new Blob([csv],{type:"text/csv"});
+    const a=document.createElement("a");
+    a.href=URL.createObjectURL(blob);
+    a.download="attendance.csv";
+    a.click();
   });
 
-  html+="</table>";
-  document.getElementById("historyContent").innerHTML=html;
-}
-
-// ================== DOWNLOAD HISTORY ===================
-function downloadHistory(){
-  if(!historyData.length) return alert("No history");
-
-  let csv="Date,CheckInOffice,CheckOutOffice,WorkDuration\n";
-
-  historyData.forEach(r=>{
-    csv+=`${r.date},${r.checkInOffice},${r.checkOutOffice},${r.workDuration}\n`;
-  });
-
-  const blob=new Blob([csv],{type:"text/csv"});
-  const a=document.createElement("a");
-  a.href=URL.createObjectURL(blob);
-  a.download="attendance.csv";
-  a.click();
-}
+};
 </script>
 </body>
 </html>
