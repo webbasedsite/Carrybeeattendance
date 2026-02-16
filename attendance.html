@@ -41,6 +41,7 @@
       border-radius: 8px;
       margin-bottom: 20px;
     }
+
     nav button {
       background: none;
       border: none;
@@ -146,7 +147,7 @@
     .modal {
       display: none;
       position: fixed;
-      z-index: 999;
+      z-index: 9999;
       top: 0; left: 0;
       width: 100%; height: 100%;
       background: rgba(0,0,0,0.6);
@@ -161,6 +162,7 @@
       max-width: 500px;
       max-height: 80%;
       overflow-y: auto;
+      position: relative;
     }
     .modal h2 {
       margin-top: 0;
@@ -181,7 +183,9 @@
       color: white;
     }
     .close-btn {
-      float: right;
+      position: absolute;
+      top: 10px;
+      right: 10px;
       background: red;
       color: white;
       border: none;
@@ -265,8 +269,8 @@
     }
 
     empInput.addEventListener("input", () => {
-      const empId = empInput.value.trim().toUpperCase();
-      const emp = allEmployees.find(e => e.empId.trim().toUpperCase() === empId);
+      const empIdVal = empInput.value.trim().toUpperCase();
+      const emp = allEmployees.find(e => e.empId.trim().toUpperCase() === empIdVal);
       if (emp) {
         welcomeEl.textContent = `Welcome ${emp.name}`;
         updateShiftOptions(emp.role);
@@ -277,8 +281,8 @@
     });
 
     async function submitAttendance(action) {
-      const empId = empInput.value.trim().toUpperCase();
-      const emp = allEmployees.find(e => e.empId.trim().toUpperCase() === empId);
+      const empIdVal = empInput.value.trim().toUpperCase();
+      const emp = allEmployees.find(e => e.empId.trim().toUpperCase() === empIdVal);
 
       if (!emp) { statusEl.textContent = "Invalid Employee ID"; return; }
       const shift = shiftSelect.value;
@@ -297,7 +301,7 @@
           const resp = await fetch(webAppUrl, {
             method: "POST",
             headers: { "Content-Type": "application/x-www-form-urlencoded" },
-            body: `action=${action}&empId=${encodeURIComponent(empId)}&shift=${encodeURIComponent(shift)}&latitude=${pos.coords.latitude}&longitude=${pos.coords.longitude}&timestamp=${timestamp}`
+            body: `action=${action}&empId=${encodeURIComponent(empIdVal)}&shift=${encodeURIComponent(shift)}&latitude=${pos.coords.latitude}&longitude=${pos.coords.longitude}&timestamp=${timestamp}`
           });
           const data = await resp.json();
           statusEl.style.color = data.success ? "green" : "#d8000c";
@@ -317,8 +321,8 @@
     }
 
     async function viewHistory() {
-      const empId = empInput.value.trim();
-      if (!empId) { alert("Enter Employee ID first"); return; }
+      const empIdVal = empInput.value.trim();
+      if (!empIdVal) { alert("Enter Employee ID first"); return; }
       document.getElementById("historyContent").innerHTML = "Loading...";
       document.getElementById("historyModal").style.display = "flex";
 
@@ -326,7 +330,7 @@
         const resp = await fetch(webAppUrl, {
           method: "POST",
           headers: { "Content-Type": "application/x-www-form-urlencoded" },
-          body: `action=getHistory&empId=${encodeURIComponent(empId)}`
+          body: `action=getHistory&empId=${encodeURIComponent(empIdVal)}`
         });
         const data = await resp.json();
         if (data.success && data.history) {
