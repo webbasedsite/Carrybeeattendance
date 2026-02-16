@@ -1,6 +1,7 @@
 /* ===== Attendance Handler (Geo-Fenced, Flexible Employee Columns) ===== */
 function handleAttendance(e) {
   try {
+    // ----- Extract and validate parameters -----
     var empId = e.parameter.empId;
     var shift = e.parameter.shift;
     var latitude = parseFloat(e.parameter.latitude);
@@ -14,14 +15,14 @@ function handleAttendance(e) {
 
     var ss = SpreadsheetApp.getActiveSpreadsheet();
 
-    /* ===== GET EMPLOYEE (Flexible Columns) ===== */
+    // ----- GET EMPLOYEE (Flexible Columns) -----
     var empSheet = ss.getSheetByName("Employees");
     if (!empSheet) throw new Error("Employees sheet not found");
 
     var empData = empSheet.getDataRange().getValues();
     if (empData.length < 2) throw new Error("No employee data found");
 
-    // Detect columns from header row dynamically
+    // Detect headers dynamically
     var headers = empData[0].map(h => h.toString().toLowerCase());
     var colEmpId = headers.indexOf("empid");
     var colName  = headers.indexOf("name");
@@ -32,6 +33,7 @@ function handleAttendance(e) {
       throw new Error("Employee sheet missing required headers (EmpID, Name, Role, Office)");
     }
 
+    // Find employee
     var emp = null;
     for (var i = 1; i < empData.length; i++) {
       if (empData[i][colEmpId].toString() == empId) {
@@ -45,7 +47,7 @@ function handleAttendance(e) {
     }
     if (!emp) throw new Error("Employee not found");
 
-    /* ===== GET OFFICE LOCATION ===== */
+    // ----- GET OFFICE LOCATION -----
     var officeSheet = ss.getSheetByName("Offices");
     if (!officeSheet) throw new Error("Offices sheet not found");
 
@@ -64,7 +66,7 @@ function handleAttendance(e) {
       throw new Error("Office location not found");
     }
 
-    /* ===== GEO-FENCING CHECK (200 meters) ===== */
+    // ----- GEO-FENCING CHECK (200 meters) -----
     var MAX_DISTANCE = 200;
     var distance = getDistanceInMeters(officeLat, officeLng, latitude, longitude);
 
@@ -74,7 +76,7 @@ function handleAttendance(e) {
       );
     }
 
-    /* ===== ATTENDANCE SHEET ===== */
+    // ----- ATTENDANCE SHEET -----
     var attSheet = ss.getSheetByName("Attendance");
     if (!attSheet) throw new Error("Attendance sheet not found");
 
@@ -88,7 +90,7 @@ function handleAttendance(e) {
       rowDate.setHours(0, 0, 0, 0);
 
       if (data[k][1].toString() == empId && rowDate.getTime() === today.getTime()) {
-        foundRow = k + 1;
+        foundRow = k + 1; // Google Sheets rows are 1-indexed
         break;
       }
     }
