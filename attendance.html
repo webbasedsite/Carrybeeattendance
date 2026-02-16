@@ -215,15 +215,15 @@ if(storedEmpId){
   checkInBtn.disabled = false;
   // Load shifts automatically for stored emp
   const emp = allEmployees.find(e=>e.empId===storedEmpId);
-  if(emp){
-    shiftSelect.innerHTML="";
-    shiftOptions[emp.role.toLowerCase()].forEach(s=>{
-      const opt=document.createElement("option");
-      opt.value=s; opt.textContent=s;
-      shiftSelect.appendChild(opt);
-    });
-  }
+if(emp){
+  shiftSelect.innerHTML="";
+  shiftOptions[emp.role.toLowerCase()].forEach(s=>{
+    const opt=document.createElement("option");
+    opt.value=s; opt.textContent=s;
+    shiftSelect.appendChild(opt);
+  });
 }
+
 
 // Save ID on first input
 empInput.addEventListener("change", () => {
