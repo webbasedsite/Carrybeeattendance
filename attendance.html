@@ -1,128 +1,145 @@
-/* ===== Attendance Handler (Geo-Fenced, Role & Shift Validation) ===== */
-function doPost(e) {
-  try {
-    var params = e.parameter;
-    var empId = params.empId;
-    var shift = params.shift;
-    var latitude = parseFloat(params.latitude);
-    var longitude = parseFloat(params.longitude);
-    var action = params.action; // "Check-In" or "Check-Out"
-    var timestamp = new Date(params.timestamp);
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Carrybee Attendance</title>
+<style>
+body, html{height:100%;margin:0;padding:0;font-family:sans-serif;background:#f5f7fa;display:flex;flex-direction:column;align-items:center;padding:20px}
+header{font-size:2rem;color:#2575fc;margin-bottom:15px;border-bottom:2px solid #FFDF00;padding-bottom:10px;width:100%;max-width:380px;text-align:center}
+nav{background:#2575fc;color:white;width:100%;max-width:380px;padding:10px 0;display:flex;justify-content:space-around;border-radius:8px;margin-bottom:20px}
+nav button{background:none;border:none;color:white;font-weight:600;cursor:pointer}nav button:hover{text-decoration:underline}
+.container{background:white;padding:25px;border-radius:15px;box-shadow:0 8px 24px rgba(37,117,252,0.15);max-width:380px;width:100%}
+label{font-weight:600;color:#2575fc;display:block;margin-bottom:10px;text-align:left}
+input, select{width:100%;padding:10px;border-radius:12px;border:2px solid #2575fc;margin-bottom:20px;outline:none;transition:all .4s ease}
+input:focus,select:focus{border-color:transparent;box-shadow:0 8px 20px rgba(37,117,252,0.35);transform:scale(1.03)}
+button.action-btn{background:#2575fc;color:white;border:none;border-radius:8px;padding:15px 0;width:100%;font-weight:600;cursor:pointer;box-shadow:0 4px 12px rgba(37,117,252,0.5);transition:.3s}
+button.action-btn:disabled{opacity:.6;cursor:not-allowed}
+#welcome{font-weight:700;font-size:1.3rem;margin-bottom:8px;color:#2575fc;text-align:center}
+#status{margin-top:20px;font-weight:600;min-height:1.2em;color:#d8000c;text-align:center}
+.spinner{border:4px solid #f3f3f3;border-top:4px solid #2575fc;border-radius:50%;width:22px;height:22px;animation:spin 1s linear infinite;display:inline-block;margin-left:8px}
+@keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+.modal{display:none;position:fixed;z-index:9999;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);justify-content:center;align-items:center}
+.modal-content{background:white;padding:20px;border-radius:10px;width:90%;max-width:500px;max-height:80%;overflow-y:auto;position:relative}
+.modal h2{margin-top:0;color:#2575fc}
+table{width:100%;border-collapse:collapse;margin-top:10px}
+table,th,td{border:1px solid #ddd;text-align:center;padding:6px}
+table th{background:#2575fc;color:white}
+.close-btn{position:absolute;top:10px;right:10px;background:red;color:white;border:none;padding:5px 10px;border-radius:5px;cursor:pointer}
+</style>
+</head>
+<body>
+<header>Carrybee Attendance</header>
 
-    if (!empId || !shift || isNaN(latitude) || isNaN(longitude) || !action) {
-      throw new Error("Missing or invalid parameters");
-    }
+<nav>
+  <button onclick="viewHistory()">View History</button>
+  <button onclick="downloadHistory()">Download CSV</button>
+</nav>
 
-    var ss = SpreadsheetApp.getActiveSpreadsheet();
+<div class="container">
+  <div id="welcome">Welcome, Guest</div>
+  <label for="empId">Employee ID</label>
+  <input type="text" id="empId" placeholder="CL-86017" autocomplete="off">
+  <label for="shift">Select Shift</label>
+  <select id="shift"></select>
+  <button class="action-btn" id="checkInBtn" onclick="submitAttendance('Check-In')">Check In</button>
+  <button class="action-btn" id="checkOutBtn" onclick="submitAttendance('Check-Out')">Check Out</button>
+  <div id="status"></div>
+</div>
 
-    // ----- EMPLOYEE SHEET -----
-    var empSheet = ss.getSheetByName("Employees");
-    if (!empSheet) throw new Error("Employees sheet missing");
-    var empData = empSheet.getDataRange().getValues();
-    var headers = empData[0].map(h => h.toString().toLowerCase());
-    var colEmpId = headers.indexOf("empid");
-    var colName  = headers.indexOf("name");
-    var colRole  = headers.indexOf("role");
-    var colOffice= headers.indexOf("office");
-    if ([colEmpId,colName,colRole,colOffice].includes(-1)) throw new Error("Employee sheet missing required headers");
+<div id="historyModal" class="modal">
+  <div class="modal-content">
+    <button class="close-btn" onclick="closeHistory()">X</button>
+    <h2>Attendance History</h2>
+    <div id="historyContent">Loading...</div>
+  </div>
+</div>
 
-    var emp = null;
-    for (var i = 1; i < empData.length; i++) {
-      if (empData[i][colEmpId].toString().toUpperCase() === empId.toUpperCase()) {
-        emp = {
-          name: empData[i][colName],
-          role: empData[i][colRole].toLowerCase(),
-          office: empData[i][colOffice]
-        };
-        break;
-      }
-    }
-    if (!emp) throw new Error("Employee not found");
+<script>
+const webAppUrl="https://script.google.com/macros/s/AKfycbyWc-qC0ugfEXunmqNEsTIlr4udgD3kHgEQjgKiOyig-5l2YDIdMshv_Zoqea3vkhKh/exec"; // Deploy your Apps Script & paste URL
+let allEmployees=[],historyData=[];
+const empInput=document.getElementById("empId"),shiftSelect=document.getElementById("shift"),statusEl=document.getElementById("status"),welcomeEl=document.getElementById("welcome"),checkInBtn=document.getElementById("checkInBtn"),checkOutBtn=document.getElementById("checkOutBtn");
 
-    // ----- SHIFT VALIDATION -----
-    var allowedShifts = { inbound:["night"], outbound:["morning","evening"] };
-    if (!allowedShifts[emp.role]?.includes(shift.toLowerCase())) {
-      throw new Error("Shift not allowed for role: " + emp.role);
-    }
+const shiftOptions={"inbound":["Night"],"outbound":["Morning","Evening"]};
 
-    // ----- OFFICE LOCATION -----
-    var officeSheet = ss.getSheetByName("Offices");
-    if (!officeSheet) throw new Error("Offices sheet missing");
-    var officeData = officeSheet.getDataRange().getValues();
-    var officeLat = null, officeLng = null;
-    for (var j=1;j<officeData.length;j++){
-      if (officeData[j][0].toString() === emp.office){
-        officeLat = parseFloat(officeData[j][1]);
-        officeLng = parseFloat(officeData[j][2]);
-        break;
-      }
-    }
-    if (officeLat===null || officeLng===null) throw new Error("Office location not found");
+async function fetchAllEmployees(){
+  try{
+    const resp=await fetch(webAppUrl,{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body:"action=getAllEmployees"});
+    const data=await resp.json();
+    if(data.success) allEmployees=data.employees||[];
+    else statusEl.textContent="Failed to load employees";
+  }catch{statusEl.textContent="Error fetching employees";}
+}
+fetchAllEmployees();
 
-    // ----- GEO-FENCE (200m) -----
-    var distance = getDistanceInMeters(officeLat, officeLng, latitude, longitude);
-    if (distance > 200) throw new Error("Outside office area (" + Math.round(distance) + " m)");
-
-    // ----- ATTENDANCE SHEET -----
-    var attSheet = ss.getSheetByName("Attendance");
-    if (!attSheet) throw new Error("Attendance sheet missing");
-    var data = attSheet.getDataRange().getValues();
-    var today = new Date(); today.setHours(0,0,0,0);
-    var foundRow = null;
-    for (var k=1;k<data.length;k++){
-      var rowDate = new Date(data[k][0]); rowDate.setHours(0,0,0,0);
-      if (data[k][1].toString().toUpperCase()===empId.toUpperCase() && rowDate.getTime()===today.getTime()){
-        foundRow = k+1;
-        break;
-      }
-    }
-
-    if (action==="Check-In") {
-      if (foundRow) throw new Error("Already checked in today");
-      attSheet.appendRow([
-        today, empId, emp.name, emp.role, emp.office,
-        timestamp, shift, "", "", latitude, longitude, "", ""
-      ]);
-    } else if (action==="Check-Out") {
-      if (!foundRow) throw new Error("No check-in found for today");
-      attSheet.getRange(foundRow,8).setValue(timestamp);   // Check-Out Time
-      attSheet.getRange(foundRow,9).setValue(shift);       // Check-Out Shift
-      attSheet.getRange(foundRow,12).setValue(latitude);   // Check-Out Lat
-      attSheet.getRange(foundRow,13).setValue(longitude);  // Check-Out Lng
-    }
-
-    return ContentService.createTextOutput(
-      JSON.stringify({ success:true, message: action + " successful" })
-    ).setMimeType(ContentService.MimeType.JSON);
-
-  } catch(err){
-    return ContentService.createTextOutput(
-      JSON.stringify({ success:false, message: err.message })
-    ).setMimeType(ContentService.MimeType.JSON);
-  }
+function updateShiftOptions(role){
+  shiftSelect.innerHTML="";
+  (shiftOptions[role.toLowerCase()]||[]).forEach(opt=>{
+    const el=document.createElement("option");el.value=opt;el.textContent=opt;shiftSelect.appendChild(el);
+  });
 }
 
-/* ===== DISTANCE FUNCTION ===== */
-function getDistanceInMeters(lat1, lon1, lat2, lon2){
-  var R=6371000;
-  var dLat=(lat2-lat1)*Math.PI/180;
-  var dLon=(lon2-lon1)*Math.PI/180;
-  var a=Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*(Math.sin(dLon/2)**2);
-  var c=2*Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-  return R*c;
+empInput.addEventListener("input",()=>{
+  const empIdVal=empInput.value.trim().toUpperCase();
+  const emp=allEmployees.find(e=>e.empId.toUpperCase()===empIdVal);
+  if(emp){welcomeEl.textContent=`Welcome ${emp.name}`;updateShiftOptions(emp.role);}
+  else{welcomeEl.textContent="Welcome, Guest";shiftSelect.innerHTML="";}
+});
+
+async function submitAttendance(action){
+  const empIdVal=empInput.value.trim().toUpperCase();
+  const emp=allEmployees.find(e=>e.empId.toUpperCase()===empIdVal);
+  if(!emp){statusEl.textContent="Invalid Employee ID";return;}
+  const shift=shiftSelect.value;if(!shiftOptions[emp.role.toLowerCase()]?.includes(shift)){statusEl.textContent=`Shift not allowed for role: ${emp.role}`;return;}
+  checkInBtn.disabled=checkOutBtn.disabled=true;
+  statusEl.innerHTML=`${action} in progress <span class="spinner"></span>`;
+  const timestamp=new Date().toISOString();
+  navigator.geolocation.getCurrentPosition(async pos=>{
+    try{
+      const resp=await fetch(webAppUrl,{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body:`action=${action}&empId=${encodeURIComponent(empIdVal)}&shift=${encodeURIComponent(shift)}&latitude=${pos.coords.latitude}&longitude=${pos.coords.longitude}&timestamp=${timestamp}`});
+      const data=await resp.json();
+      statusEl.style.color=data.success?"green":"#d8000c";
+      statusEl.textContent=data.success?`${action} successful`:data.message||`${action} failed`;
+    }catch{
+      statusEl.style.color="#d8000c";statusEl.textContent="Error submitting attendance";
+    }finally{checkInBtn.disabled=checkOutBtn.disabled=false;}
+  },()=>{statusEl.textContent="Location access denied or unavailable";checkInBtn.disabled=checkOutBtn.disabled=false;},{enableHighAccuracy:true,timeout:10000});
 }
 
-/* ===== FETCH EMPLOYEES ===== */
-function getAllEmployees() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var empSheet = ss.getSheetByName("Employees");
-  if (!empSheet) return {success:false,message:"Employee sheet missing"};
-  var empData = empSheet.getDataRange().getValues();
-  var headers = empData[0].map(h=>h.toString().toLowerCase());
-  var colEmpId = headers.indexOf("empid");
-  var colName  = headers.indexOf("name");
-  var colRole  = headers.indexOf("role");
-  if ([colEmpId,colName,colRole].includes(-1)) return {success:false,message:"Invalid headers"};
-  var employees = empData.slice(1).map(r=>({empId:r[colEmpId],name:r[colName],role:r[colRole]}));
-  return {success:true,employees:employees};
+async function viewHistory(){
+  const empIdVal=empInput.value.trim();if(!empIdVal){alert("Enter Employee ID first");return;}
+  document.getElementById("historyContent").innerHTML="Loading...";document.getElementById("historyModal").style.display="flex";
+  try{
+    const resp=await fetch(webAppUrl,{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body:`action=getHistory&empId=${encodeURIComponent(empIdVal)}`});
+    const data=await resp.json();
+    if(data.success && data.history){historyData=data.history;renderHistoryTable(historyData);}else{document.getElementById("historyContent").innerHTML="No history found.";}
+  }catch{document.getElementById("historyContent").innerHTML="Error fetching history.";}
 }
+
+function renderHistoryTable(records){
+  if(!records.length){document.getElementById("historyContent").innerHTML="No records found.";return;}
+  let html=`<table><tr><th>Date</th><th>Time</th><th>Shift</th><th>Location</th><th>Work Duration</th></tr>`;
+  records.forEach(r=>{
+    const ciLat=r.checkInLatitude?r.checkInLatitude.toFixed(5):"",ciLng=r.checkInLongitude?r.checkInLongitude.toFixed(5):"";
+    const coLat=r.checkOutLatitude?r.checkOutLatitude.toFixed(5):"",coLng=r.checkOutLongitude?r.checkOutLongitude.toFixed(5):"";
+    html+=`<tr><td>${r.date||""}</td><td>Check-In: ${r.checkInTime||""}<br>Check-Out: ${r.checkOutTime||""}</td><td>Check-In: ${r.checkInShift||""}<br>Check-Out: ${r.checkOutShift||""}</td><td>Check-In: ${ciLat},${ciLng}<br>Check-Out: ${coLat},${coLng}</td><td>${r.workDuration||""}</td></tr>`;
+  });
+  html+=`</table>`;document.getElementById("historyContent").innerHTML=html;
+}
+
+function closeHistory(){document.getElementById("historyModal").style.display="none";}
+
+function downloadHistory(){
+  if(!historyData.length){alert("No history available. Please fetch history first.");return;}
+  let csv="Date,Check-In Time,Check-In Shift,Check-In Location,Check-Out Time,Check-Out Shift,Check-Out Location,Work Duration\n";
+  historyData.forEach(r=>{
+    const ciLoc=`${r.checkInLatitude||""},${r.checkInLongitude||""}`;
+    const coLoc=`${r.checkOutLatitude||""},${r.checkOutLongitude||""}`;
+    csv+=`"${r.date||""}","${r.checkInTime||""}","${r.checkInShift||""}","${ciLoc}","${r.checkOutTime||""}","${r.checkOutShift||""}","${coLoc}","${r.workDuration||""}"\n`;
+  });
+  const blob=new Blob([csv],{type:"text/csv"});const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");a.href=url;a.download="attendance_history.csv";document.body.appendChild(a);a.click();document.body.removeChild(a);
+}
+</script>
+</body>
+</html>
