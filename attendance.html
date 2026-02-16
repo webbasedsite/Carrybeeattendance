@@ -72,37 +72,26 @@
     }
 
     input[type="text"], select {
-  width: 100%;
-  padding: 10px 14px;           /* slightly smaller */
-  font-size: 0.95rem;           /* slightly smaller text */
-  border-radius: 12px;          /* rounded, premium look */
-  border: 2px solid #2575fc;
-  margin-bottom: 20px;
-  outline: none;
-  background: #ffffff;
-  box-shadow: 0 4px 12px rgba(37,117,252,0.1);
-  transition: all 0.4s ease;
-}
+      width: 100%;
+      padding: 10px 14px;
+      font-size: 0.95rem;
+      border-radius: 12px;
+      border: 2px solid #2575fc;
+      margin-bottom: 20px;
+      outline: none;
+      background: #ffffff;
+      box-shadow: 0 4px 12px rgba(37,117,252,0.1);
+      transition: all 0.4s ease;
+    }
 
-input:focus, select:focus {
-  border-color: transparent;
-  background: linear-gradient(#ffffff, #ffffff) padding-box,
-              linear-gradient(135deg, #2575fc, #6a11cb) border-box;
-  box-shadow: 0 8px 20px rgba(37,117,252,0.35), 0 0 0 4px rgba(37,117,252,0.15);
-  transform: scale(1.03);
-}
-
-
-
-input:focus, select:focus {
-  border-color: transparent;
-  background: linear-gradient(white, white) padding-box,
-              linear-gradient(135deg, #2575fc, #6a11cb) border-box;
-  box-shadow: 0 8px 20px rgba(37,117,252,0.35), 0 0 0 4px rgba(37,117,252,0.15);
-  transform: scale(1.03);
-  transition: all 0.4s ease;
-}
-
+    input:focus, select:focus {
+      border-color: transparent;
+      background: linear-gradient(white, white) padding-box,
+                  linear-gradient(135deg, #2575fc, #6a11cb) border-box;
+      box-shadow: 0 8px 20px rgba(37,117,252,0.35), 0 0 0 4px rgba(37,117,252,0.15);
+      transform: scale(1.03);
+      transition: all 0.4s ease;
+    }
 
     button {
       background: #2575fc;
@@ -141,8 +130,8 @@ input:focus, select:focus {
       border: 4px solid #f3f3f3;
       border-top: 4px solid #2575fc;
       border-radius: 50%;
-      width: 20px;
-      height: 20px;
+      width: 22px;
+      height: 22px;
       animation: spin 1s linear infinite;
       display: inline-block;
       margin-left: 8px;
@@ -204,9 +193,8 @@ input:focus, select:focus {
 </head>
 <body>
 
-  <header></header>
+  <header>Carrybee Attendance</header>
 
-  <!-- TOP MENU -->
   <nav>
     <button onclick="viewHistory()">View History</button>
     <button onclick="downloadHistory()">Download CSV</button>
@@ -227,7 +215,6 @@ input:focus, select:focus {
     <div id="status"></div>
   </div>
 
-  <!-- HISTORY MODAL -->
   <div id="historyModal" class="modal">
     <div class="modal-content">
       <button class="close-btn" onclick="closeHistory()">X</button>
@@ -237,7 +224,7 @@ input:focus, select:focus {
   </div>
 
   <script>
-    const webAppUrl = "https://script.google.com/macros/s/AKfycbzq2WIrUMacRKbVpkS-D0ac6UWfoM4uj9Bo-_Xmnjp8T_SbneEF7y97Obv6DN522nqA/exec";
+    const webAppUrl = "https://script.google.com/macros/s/AKfycbxd7BYIGLWHrkaD-UIwkFSletCpSdwSpVJV8oKnN_EQJ322fazLUiFNdh0-xHhv_OO1/exec";
     const empInput = document.getElementById("empId");
     const shiftSelect = document.getElementById("shift");
     const statusEl = document.getElementById("status");
@@ -248,12 +235,8 @@ input:focus, select:focus {
     let allEmployees = [];
     let historyData = [];
 
-    const shiftOptions = {
-      "inbound": ["Night"],
-      "outbound": ["Morning", "Evening"]
-    };
+    const shiftOptions = { "inbound": ["Night"], "outbound": ["Morning", "Evening"] };
 
-    // Fetch employees on load
     async function fetchAllEmployees() {
       try {
         const resp = await fetch(webAppUrl, {
@@ -262,11 +245,8 @@ input:focus, select:focus {
           body: "action=getAllEmployees"
         });
         const data = await resp.json();
-        if (data.success) {
-          allEmployees = data.employees || [];
-        } else {
-          statusEl.textContent = "Failed to load employees";
-        }
+        if (data.success) allEmployees = data.employees || [];
+        else statusEl.textContent = "Failed to load employees";
       } catch {
         statusEl.textContent = "Error fetching employees";
       }
@@ -284,10 +264,9 @@ input:focus, select:focus {
       });
     }
 
-    // On Employee ID input, validate and autofill
     empInput.addEventListener("input", () => {
-      const empId = empInput.value.trim();
-      const emp = allEmployees.find(e => e.empId === empId);
+      const empId = empInput.value.trim().toUpperCase();
+      const emp = allEmployees.find(e => e.empId.trim().toUpperCase() === empId);
       if (emp) {
         welcomeEl.textContent = `Welcome ${emp.name}`;
         updateShiftOptions(emp.role);
@@ -297,43 +276,16 @@ input:focus, select:focus {
       }
     });
 
-    // Save to localStorage
-    function saveUser(emp) {
-      localStorage.setItem("empId", emp.empId);
-      localStorage.setItem("name", emp.name);
-      localStorage.setItem("role", emp.role);
-    }
-
-    // Load user from localStorage
-    function loadUser() {
-      const empId = localStorage.getItem("empId");
-      const name = localStorage.getItem("name");
-      const role = localStorage.getItem("role");
-      if (empId && name && role) {
-        empInput.value = empId;
-        empInput.disabled = true;
-        welcomeEl.textContent = `Welcome ${name}`;
-        updateShiftOptions(role);
-      }
-    }
-    loadUser();
-
     async function submitAttendance(action) {
-      const empId = empInput.value.trim();
-      const emp = allEmployees.find(e => e.empId === empId);
+      const empId = empInput.value.trim().toUpperCase();
+      const emp = allEmployees.find(e => e.empId.trim().toUpperCase() === empId);
 
-      if (!emp) {
-        statusEl.textContent = "Invalid Employee ID";
-        return;
-      }
-
+      if (!emp) { statusEl.textContent = "Invalid Employee ID"; return; }
       const shift = shiftSelect.value;
-      if (!shiftOptions[emp.role.toLowerCase()].includes(shift)) {
-        statusEl.textContent = `Shift not allowed for role: ${emp.role}`;
-        return;
+      if (!shiftOptions[emp.role.toLowerCase()]?.includes(shift)) {
+        statusEl.textContent = `Shift not allowed for role: ${emp.role}`; return;
       }
 
-      // Disable buttons
       checkInBtn.disabled = true;
       checkOutBtn.disabled = true;
       statusEl.innerHTML = `${action} in progress <span class="spinner"></span>`;
@@ -348,15 +300,8 @@ input:focus, select:focus {
             body: `action=${action}&empId=${encodeURIComponent(empId)}&shift=${encodeURIComponent(shift)}&latitude=${pos.coords.latitude}&longitude=${pos.coords.longitude}&timestamp=${timestamp}`
           });
           const data = await resp.json();
-
-          if (data.success) {
-            statusEl.style.color = "green";
-            statusEl.textContent = `${action} successful`;
-            saveUser(emp);
-          } else {
-            statusEl.style.color = "#d8000c";
-            statusEl.textContent = data.message || `${action} failed`;
-          }
+          statusEl.style.color = data.success ? "green" : "#d8000c";
+          statusEl.textContent = data.success ? `${action} successful` : data.message || `${action} failed`;
         } catch {
           statusEl.style.color = "#d8000c";
           statusEl.textContent = "Error submitting attendance";
@@ -368,16 +313,12 @@ input:focus, select:focus {
         statusEl.textContent = "Location access denied or unavailable";
         checkInBtn.disabled = false;
         checkOutBtn.disabled = false;
-      });
+      }, { enableHighAccuracy: true, timeout: 10000 });
     }
 
-    // --- HISTORY FUNCTIONS ---
     async function viewHistory() {
       const empId = empInput.value.trim();
-      if (!empId) {
-        alert("Enter Employee ID first");
-        return;
-      }
+      if (!empId) { alert("Enter Employee ID first"); return; }
       document.getElementById("historyContent").innerHTML = "Loading...";
       document.getElementById("historyModal").style.display = "flex";
 
@@ -394,82 +335,63 @@ input:focus, select:focus {
         } else {
           document.getElementById("historyContent").innerHTML = "No history found.";
         }
-      } catch (err) {
+      } catch {
         document.getElementById("historyContent").innerHTML = "Error fetching history.";
       }
     }
 
     function renderHistoryTable(records) {
-  if (!records.length) {
-    document.getElementById("historyContent").innerHTML = "No records found.";
-    return;
-  }
+      if (!records.length) { document.getElementById("historyContent").innerHTML = "No records found."; return; }
 
-  let html = `
-    <table>
-      <tr>
-        <th>Date</th>
-        <th>Time</th>
-        <th>Shift</th>
-        <th>Location</th>
-        <th>Work Duration</th>
-      </tr>
-  `;
+      let html = `<table>
+        <tr>
+          <th>Date</th>
+          <th>Time</th>
+          <th>Shift</th>
+          <th>Location</th>
+          <th>Work Duration</th>
+        </tr>`;
 
-  records.forEach(r => {
-    html += `
-      <tr>
-        <td>${r.date || ""}</td>
-        <td>
-          Check-In: ${r.checkInTime || ""}<br>
-          Check-Out: ${r.checkOutTime || ""}
-        </td>
-        <td>
-          Check-In: ${r.checkInShift || ""}<br>
-          Check-Out: ${r.checkOutShift || ""}
-        </td>
-        <td>
-          Check-In: ${r.checkInLatitude || ""},${r.checkInLongitude || ""}<br>
-          Check-Out: ${r.checkOutLatitude || ""},${r.checkOutLongitude || ""}
-        </td>
-        <td>${r.workDuration || ""}</td>
-      </tr>
-    `;
-  });
+      records.forEach(r => {
+        const ciLat = r.checkInLatitude ? parseFloat(r.checkInLatitude).toFixed(5) : "";
+        const ciLng = r.checkInLongitude ? parseFloat(r.checkInLongitude).toFixed(5) : "";
+        const coLat = r.checkOutLatitude ? parseFloat(r.checkOutLatitude).toFixed(5) : "";
+        const coLng = r.checkOutLongitude ? parseFloat(r.checkOutLongitude).toFixed(5) : "";
 
-  html += `</table>`;
-  document.getElementById("historyContent").innerHTML = html;
-}
+        html += `<tr>
+          <td>${r.date || ""}</td>
+          <td>Check-In: ${r.checkInTime || ""}<br>Check-Out: ${r.checkOutTime || ""}</td>
+          <td>Check-In: ${r.checkInShift || ""}<br>Check-Out: ${r.checkOutShift || ""}</td>
+          <td>Check-In: ${ciLat},${ciLng}<br>Check-Out: ${coLat},${coLng}</td>
+          <td>${r.workDuration || ""}</td>
+        </tr>`;
+      });
 
-    function closeHistory() {
-      document.getElementById("historyModal").style.display = "none";
+      html += `</table>`;
+      document.getElementById("historyContent").innerHTML = html;
     }
 
+    function closeHistory() { document.getElementById("historyModal").style.display = "none"; }
+
     function downloadHistory() {
-  if (!historyData.length) {
-    alert("No history available. Please fetch history first.");
-    return;
-  }
+      if (!historyData.length) { alert("No history available. Please fetch history first."); return; }
 
-  let csv = "Date,Check-In Time,Check-In Shift,Check-In Location,Check-Out Time,Check-Out Shift,Check-Out Location,Work Duration\n";
+      let csv = "Date,Check-In Time,Check-In Shift,Check-In Location,Check-Out Time,Check-Out Shift,Check-Out Location,Work Duration\n";
+      historyData.forEach(r => {
+        const ciLoc = `${r.checkInLatitude || ""},${r.checkInLongitude || ""}`;
+        const coLoc = `${r.checkOutLatitude || ""},${r.checkOutLongitude || ""}`;
+        csv += `"${r.date || ""}","${r.checkInTime || ""}","${r.checkInShift || ""}","${ciLoc}","${r.checkOutTime || ""}","${r.checkOutShift || ""}","${coLoc}","${r.workDuration || ""}"\n`;
+      });
 
-  historyData.forEach(r => {
-    const checkInLoc = `${r.checkInLatitude || ""},${r.checkInLongitude || ""}`;
-    const checkOutLoc = `${r.checkOutLatitude || ""},${r.checkOutLongitude || ""}`;
-
-    csv += `"${r.date || ""}","${r.checkInTime || ""}","${r.checkInShift || ""}","${checkInLoc}","${r.checkOutTime || ""}","${r.checkOutShift || ""}","${checkOutLoc}","${r.workDuration || ""}"\n`;
-  });
-
-  const blob = new Blob([csv], { type: "text/csv" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "attendance_history.csv";
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-}
-
+      const blob = new Blob([csv], { type: "text/csv" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "attendance_history.csv";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
   </script>
 </body>
 </html>
