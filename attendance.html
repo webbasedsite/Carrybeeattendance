@@ -150,7 +150,13 @@ th { background:#2575fc; color:white;}
   <input type="text" id="empId" placeholder="CL-86017">
 
   <label>Shift</label>
-  <select id="shift"></select>
+<select id="shift">
+  <option value="">Select Shift</option>
+  <option value="Morning">Morning</option>
+  <option value="Evening">Evening</option>
+  <option value="Night">Night</option>
+</select>
+
 
   <button class="action-btn" id="checkInBtn"
     onclick="submitAttendance('Check-In')">Check In</button>
