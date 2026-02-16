@@ -174,19 +174,28 @@ function getMatchingOffice(lat, lng) {
 
   const data = officeSheet.getDataRange().getValues();
 
+  // Loop through all offices
   for (let i = 1; i < data.length; i++) {
 
-    const officeName = data[i][0];
-    const officeLat = parseFloat(data[i][1]);
-    const officeLng = parseFloat(data[i][2]);
+    const officeName = data[i][0]; // Column A = Office Name
 
-    const distance = getDistanceInMeters(
-      officeLat, officeLng,
-      lat, lng
-    );
+    // Columns B & C = multiple location coordinates
+    const locations = [data[i][1], data[i][2]]; // adjust if more columns exist
 
-    if (distance <= GEO_RADIUS) {
-      return { success:true, officeName:officeName };
+    for (let loc of locations) {
+      if (!loc) continue;
+
+      // assuming "lat,lng" format
+      const parts = loc.toString().split(",");
+      if(parts.length < 2) continue;
+
+      const officeLat = parseFloat(parts[0]);
+      const officeLng = parseFloat(parts[1]);
+
+      const distance = getDistanceInMeters(officeLat, officeLng, lat, lng);
+      if (distance <= GEO_RADIUS) {
+        return { success:true, officeName: officeName };
+      }
     }
   }
 
