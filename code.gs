@@ -1,13 +1,5 @@
 /*********************************************************
- * ===== Carrybee Attendance Backend (Enterprise Version) =====
- * Features:
- * - Role + Shift Validation
- * - Multi-Office Validation
- * - Geo-Fencing (200m default)
- * - Duplicate Check-In Prevention
- * - Check-Out Only After Check-In
- * - Same-Day Restriction
- * - Work Duration Auto Calculate
+ * ===== Carrybee Attendance Backend (Updated & Fixed) =====
  *********************************************************/
 
 const GEO_RADIUS = 200; // meters
@@ -19,20 +11,25 @@ function doPost(e) {
     const params = e.parameter;
     const action = params.action;
 
-    if (!action) throw new Error("Action missing");
+    if (!action)
+      throw new Error("Action missing");
 
-    if (action === "getAllEmployees") {
+    if (action === "getHistory")
+      return jsonResponse(getHistory(params.empId));
+
+    if (action === "getAllEmployees")
       return jsonResponse(getAllEmployees());
-    }
 
-    if (action === "Check-In" || action === "Check-Out") {
+    if (action === "getOffices")
+      return jsonResponse(getOffices());
+
+    if (action === "Check-In" || action === "Check-Out")
       return jsonResponse(handleAttendance(params));
-    }
 
     throw new Error("Invalid action");
 
   } catch (err) {
-    return jsonResponse({ success: false, message: err.message });
+    return jsonResponse({ success:false, message:err.message });
   }
 }
 
@@ -41,15 +38,19 @@ function handleAttendance(params) {
 
   const empId = (params.empId || "").toUpperCase().trim();
   const shift = (params.shift || "").toLowerCase().trim();
+  const selectedOffice = (params.office || "").trim();
   const latitude = parseFloat(params.latitude);
   const longitude = parseFloat(params.longitude);
   const action = params.action;
   const timestamp = new Date(params.timestamp);
 
-  if (!empId || !shift || isNaN(latitude) || isNaN(longitude))
+  if (!empId || !shift || !selectedOffice ||
+      isNaN(latitude) || isNaN(longitude))
     throw new Error("Missing or invalid parameters");
 
   const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const timezone = ss.getSpreadsheetTimeZone();
+  const todayStr = Utilities.formatDate(new Date(), timezone, "yyyy-MM-dd");
 
   /* ===== EMPLOYEE VALIDATION ===== */
   const empSheet = ss.getSheetByName("Employees");
@@ -77,7 +78,8 @@ function handleAttendance(params) {
     }
   }
 
-  if (!employee) throw new Error("Employee not found");
+  if (!employee)
+    throw new Error("Employee not found");
 
   /* ===== ROLE + SHIFT VALIDATION ===== */
   const allowedShifts = {
@@ -88,8 +90,9 @@ function handleAttendance(params) {
   if (!allowedShifts[employee.role]?.includes(shift))
     throw new Error("Shift not allowed for role: " + employee.role);
 
-  /* ===== MATCH ANY REGISTERED OFFICE ===== */
-  const officeMatch = getMatchingOffice(latitude, longitude);
+  /* ===== OFFICE VALIDATION (STRICT SELECTED OFFICE ONLY) ===== */
+  const officeMatch = getMatchingOffice(latitude, longitude, selectedOffice);
+
   if (!officeMatch.success)
     throw new Error(officeMatch.message);
 
@@ -100,18 +103,19 @@ function handleAttendance(params) {
   if (!attSheet) throw new Error("Attendance sheet missing");
 
   const data = attSheet.getDataRange().getValues();
-  const today = new Date();
-  today.setHours(0,0,0,0);
-
   let existingRow = null;
 
   for (let i = 1; i < data.length; i++) {
-    const rowDate = new Date(data[i][0]);
-    rowDate.setHours(0,0,0,0);
+
+    const rowDate = Utilities.formatDate(
+      new Date(data[i][0]),
+      timezone,
+      "yyyy-MM-dd"
+    );
 
     if (
       data[i][1].toString().toUpperCase() === empId &&
-      rowDate.getTime() === today.getTime()
+      rowDate === todayStr
     ) {
       existingRow = i + 1;
       break;
@@ -125,18 +129,18 @@ function handleAttendance(params) {
       throw new Error("Already checked in today");
 
     attSheet.appendRow([
-      today,                 // Date
+      todayStr,
       empId,
       employee.name,
       employee.role,
-      matchedOffice,         // Check-In Office
-      timestamp,             // Check-In Time
+      matchedOffice,
+      timestamp,
       shift,
-      "", "",                // Check-Out Time + Shift
-      "",                    // Check-Out Office
-      latitude, longitude,   // Check-In Lat/Lng
-      "", "",                // Check-Out Lat/Lng
-      ""                     // Work Duration
+      "", "", "",
+      latitude,
+      longitude,
+      "", "",
+      ""
     ]);
   }
 
@@ -158,54 +162,74 @@ function handleAttendance(params) {
   }
 
   return {
-    success: true,
+    success:true,
     message: action + " successful at " + matchedOffice
   };
 }
 
-/* ================= MATCH ANY OFFICE ================= */
-function getMatchingOffice(lat, lng) {
+/* ================= STRICT OFFICE MATCH ================= */
+function getMatchingOffice(lat, lng, selectedOffice) {
 
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const officeSheet = ss.getSheetByName("Offices");
+  const sheet = ss.getSheetByName("Offices");
 
-  if (!officeSheet)
+  if (!sheet)
     return { success:false, message:"Offices sheet missing" };
 
-  const data = officeSheet.getDataRange().getValues();
+  const data = sheet.getDataRange().getValues();
 
-  // Loop through all offices
   for (let i = 1; i < data.length; i++) {
 
-    const officeName = data[i][0]; // Column A = Office Name
+    const officeName = data[i][0];
 
-    // Columns B & C = multiple location coordinates
-    const locations = [data[i][1], data[i][2]]; // adjust if more columns exist
+    if (!officeName) continue;
 
-    for (let loc of locations) {
-      if (!loc) continue;
+    if (officeName.toString().trim() === selectedOffice) {
 
-      // assuming "lat,lng" format
-      const parts = loc.toString().split(",");
-      if(parts.length < 2) continue;
+      const locations = [data[i][1], data[i][2]]; // B & C only
 
-      const officeLat = parseFloat(parts[0]);
-      const officeLng = parseFloat(parts[1]);
+      for (let loc of locations) {
 
-      const distance = getDistanceInMeters(officeLat, officeLng, lat, lng);
-      if (distance <= GEO_RADIUS) {
-        return { success:true, officeName: officeName };
+        if (!loc) continue;
+
+        const parts = loc.toString().split(",");
+        if (parts.length < 2) continue;
+
+        const officeLat = parseFloat(parts[0].trim());
+        const officeLng = parseFloat(parts[1].trim());
+
+        if (isNaN(officeLat) || isNaN(officeLng))
+          continue;
+
+        const distance = getDistanceInMeters(
+          officeLat,
+          officeLng,
+          lat,
+          lng
+        );
+
+        if (distance <= GEO_RADIUS) {
+          return {
+            success:true,
+            officeName:selectedOffice
+          };
+        }
       }
+
+      return {
+        success:false,
+        message:"Not within 200 meters of selected office"
+      };
     }
   }
 
   return {
     success:false,
-    message:"Not inside any registered office area"
+    message:"Selected office not found"
   };
 }
 
-/* ================= DISTANCE FUNCTION ================= */
+/* ================= DISTANCE ================= */
 function getDistanceInMeters(lat1, lon1, lat2, lon2) {
   const R = 6371000;
   const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -218,7 +242,6 @@ function getDistanceInMeters(lat1, lon1, lat2, lon2) {
     Math.sin(dLon / 2) ** 2;
 
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
   return R * c;
 }
 
@@ -233,16 +256,33 @@ function calculateDuration(start, end) {
   return hours + "h " + minutes + "m";
 }
 
+/* ================= GET OFFICES ================= */
+function getOffices() {
+
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName("Offices");
+
+  if (!sheet)
+    return { success:false, message:"Offices sheet missing" };
+
+  const offices = sheet.getRange("A2:A")
+    .getValues()
+    .flat()
+    .filter(String);
+
+  return { success:true, offices:offices };
+}
+
 /* ================= GET EMPLOYEES ================= */
 function getAllEmployees() {
 
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const empSheet = ss.getSheetByName("Employees");
+  const sheet = ss.getSheetByName("Employees");
 
-  if (!empSheet)
+  if (!sheet)
     return { success:false, message:"Employees sheet missing" };
 
-  const data = empSheet.getDataRange().getValues();
+  const data = sheet.getDataRange().getValues();
   const headers = data[0].map(h => h.toString().toLowerCase());
 
   const colEmpId = headers.indexOf("empid");
@@ -259,6 +299,39 @@ function getAllEmployees() {
   }));
 
   return { success:true, employees:employees };
+}
+
+/* ================= HISTORY ================= */
+function getHistory(empId) {
+
+  if (!empId)
+    return { success:false, message:"Employee ID required" };
+
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName("Attendance");
+
+  if (!sheet)
+    return { success:false, message:"Attendance sheet missing" };
+
+  const data = sheet.getDataRange().getValues();
+  const history = [];
+
+  for (let i = 1; i < data.length; i++) {
+
+    if (data[i][1].toString().toUpperCase() === empId.toUpperCase()) {
+
+      history.push({
+        date: data[i][0],
+        checkInOffice: data[i][4],
+        checkInTime: data[i][5],
+        checkOutTime: data[i][7],
+        checkOutOffice: data[i][9],
+        workDuration: data[i][14]
+      });
+    }
+  }
+
+  return { success:true, history:history };
 }
 
 /* ================= JSON RESPONSE ================= */
