@@ -54,7 +54,7 @@ function handleAttendance(params) {
 
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const timezone = ss.getSpreadsheetTimeZone();
-  const todayStr = Utilities.formatDate(new Date(), timezone, "yyyy-MM-dd");
+  const todayStr = Utilities.formatDate(timestamp, timezone, "yyyy-MM-dd");
 
   // ===== EMPLOYEE VALIDATION =====
   const empSheet = ss.getSheetByName("Employees");
