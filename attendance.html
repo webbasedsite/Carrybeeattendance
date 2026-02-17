@@ -5,103 +5,26 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Carrybee Attendance</title>
 <style>
-/* --- Your Same CSS (unchanged) --- */
-body, html {
-  margin:0; padding:0;
-  font-family:'Segoe UI', sans-serif;
-  background:#f5f7fa; color:#000;
-  display:flex; flex-direction:column;
-  align-items:center; padding:20px;
-  transition:0.3s;
-}
+/* --- Same styling as before --- */
+body, html { margin:0; padding:0; font-family:'Segoe UI', sans-serif; background:#f5f7fa; color:#000; display:flex; flex-direction:column; align-items:center; padding:20px; transition:0.3s;}
 .dark-mode { background:#121212; color:#f5f7fa; }
-header {
-  font-size:2rem; font-weight:700;
-  margin-bottom:15px; color:#2575fc;
-  border-bottom:2px solid #FFDF00;
-  padding-bottom:10px;
-  width:100%; max-width:380px;
-  text-align:center;
-}
-nav {
-  background:#2575fc; color:white;
-  width:100%; max-width:380px;
-  padding:10px 0; display:flex;
-  justify-content:space-around;
-  border-radius:8px; margin-bottom:20px;
-}
-nav button {
-  background:none; border:none;
-  color:white; font-weight:600;
-  cursor:pointer;
-}
-#darkModeToggle {
-  background:#6a11cb;
-  padding:5px 10px;
-  border-radius:6px;
-}
-.container {
-  background:white; padding:25px 30px;
-  border-radius:15px;
-  box-shadow:0 8px 24px rgba(37,117,252,0.15);
-  max-width:380px; width:100%;
-}
+header { font-size:2rem; font-weight:700; margin-bottom:15px; color:#2575fc; border-bottom:2px solid #FFDF00; padding-bottom:10px; width:100%; max-width:380px; text-align:center; }
+nav { background:#2575fc; color:white; width:100%; max-width:380px; padding:10px 0; display:flex; justify-content:space-around; border-radius:8px; margin-bottom:20px; }
+nav button { background:none; border:none; color:white; font-weight:600; cursor:pointer; }
+#darkModeToggle { background:#6a11cb; padding:5px 10px; border-radius:6px; }
+.container { background:white; padding:25px 30px; border-radius:15px; box-shadow:0 8px 24px rgba(37,117,252,0.15); max-width:380px; width:100%; }
 .dark-mode .container { background:#1e1e1e; }
 label { font-weight:600; color:#2575fc; display:block; margin-bottom:6px; }
-input, select {
-  width:100%; padding:10px;
-  border-radius:10px;
-  border:2px solid #2575fc;
-  margin-bottom:15px;
-}
-button.action-btn {
-  background:#2575fc;
-  color:white; border:none;
-  border-radius:8px;
-  padding:12px;
-  width:100%;
-  font-weight:600;
-  cursor:pointer;
-  margin-top:5px;
-}
+input, select { width:100%; padding:10px; border-radius:10px; border:2px solid #2575fc; margin-bottom:15px; }
+button.action-btn { background:#2575fc; color:white; border:none; border-radius:8px; padding:12px; width:100%; font-weight:600; cursor:pointer; margin-top:5px; }
 button:disabled { opacity:0.6; cursor:not-allowed; }
 #status { margin-top:15px; font-weight:600; }
-.success-animation {
-  position:fixed; top:20%;
-  left:50%; transform:translateX(-50%);
-  background:#28a745; color:white;
-  padding:15px 25px;
-  border-radius:12px;
-  opacity:0; transition:0.4s;
-  font-weight:600;
-}
+.success-animation { position:fixed; top:20%; left:50%; transform:translateX(-50%); background:#28a745; color:white; padding:15px 25px; border-radius:12px; opacity:0; transition:0.4s; font-weight:600; }
 .success-animation.show { opacity:1; }
-.modal {
-  display:none;
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,0.6);
-  justify-content:center;
-  align-items:center;
-}
-.modal-content {
-  background:white;
-  padding:20px;
-  border-radius:10px;
-  max-height:80%;
-  overflow-y:auto;
-  width:90%; max-width:600px;
-}
+.modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); justify-content:center; align-items:center; }
+.modal-content { background:white; padding:20px; border-radius:10px; max-height:80%; overflow-y:auto; width:90%; max-width:600px; }
 .dark-mode .modal-content { background:#1e1e1e; }
-.close-btn {
-  float:right;
-  background:red;
-  color:white;
-  border:none;
-  padding:5px 10px;
-  border-radius:5px;
-  cursor:pointer;
-}
+.close-btn { float:right; background:red; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; }
 table { width:100%; border-collapse:collapse; margin-top:10px;}
 th, td { border:1px solid #ccc; padding:6px; text-align:center;}
 th { background:#2575fc; color:white;}
@@ -118,15 +41,11 @@ th { background:#2575fc; color:white;}
 </nav>
 
 <div class="container">
-
   <label>Employee ID</label>
   <input type="text" id="empId" placeholder="CL-86017">
 
-  <!-- NEW OFFICE DROPDOWN -->
   <label>Office</label>
-  <select id="office">
-    <option value="">Loading offices...</option>
-  </select>
+  <select id="office"><option value="">Loading offices...</option></select>
 
   <label>Shift</label>
   <select id="shift">
@@ -148,14 +67,15 @@ th { background:#2575fc; color:white;}
     <button class="close-btn" id="closeHistory">Close</button>
     <h3>Attendance History</h3>
     <div id="historyContent"></div>
+    <button class="action-btn" id="downloadCSVBtn">Download CSV</button>
   </div>
 </div>
 
 <script>
-const webAppUrl = "YOUR_WEB_APP_URL_HERE";
+const webAppUrl = "https://script.google.com/macros/s/AKfycbx0umkL8jhOrwrByXzU3NTMeX4EluigmtlutoBA6JH6MqQXGMVSmu88P0G6D7tJEAv1/exec"; // replace with your deployed Google Apps Script URL
+let historyData = [];
 
 window.onload = function() {
-
   const empInput = document.getElementById("empId");
   const officeSelect = document.getElementById("office");
   const shiftSelect = document.getElementById("shift");
@@ -164,15 +84,13 @@ window.onload = function() {
   const checkOutBtn = document.getElementById("checkOutBtn");
   const successAnim = document.getElementById("successAnim");
   const historyBtn = document.getElementById("historyBtn");
-  const downloadBtn = document.getElementById("downloadBtn");
   const closeHistoryBtn = document.getElementById("closeHistory");
   const modal = document.getElementById("historyModal");
-  let historyData = [];
+  const downloadCSVBtn = document.getElementById("downloadCSVBtn");
 
-  document.getElementById("darkModeToggle")
-    .addEventListener("click",()=>document.body.classList.toggle("dark-mode"));
+  document.getElementById("darkModeToggle").addEventListener("click",()=>document.body.classList.toggle("dark-mode"));
 
-  /* ===== LOAD OFFICES FROM BACKEND ===== */
+  /* ===== LOAD OFFICES ===== */
   function loadOffices(){
     fetch(webAppUrl,{
       method:"POST",
@@ -181,34 +99,23 @@ window.onload = function() {
     })
     .then(res=>res.json())
     .then(data=>{
-      if(!data.success){
-        officeSelect.innerHTML="<option>Error loading</option>";
-        return;
-      }
-
+      if(!data.success){ officeSelect.innerHTML="<option>Error loading</option>"; return; }
       officeSelect.innerHTML='<option value="">Select Office</option>';
       data.offices.forEach(o=>{
         const opt=document.createElement("option");
-        opt.value=o;
-        opt.textContent=o;
+        opt.value=o; opt.textContent=o;
         officeSelect.appendChild(opt);
       });
     });
   }
-
   loadOffices();
 
-  /* ===== SUBMIT ATTENDANCE ===== */
+  /* ===== ATTENDANCE SUBMIT ===== */
   async function submitAttendance(action){
-
     const empId = empInput.value.trim();
     const shift = shiftSelect.value;
     const office = officeSelect.value;
-
-    if(!empId || !shift || !office){
-      statusEl.textContent="Fill all fields";
-      return;
-    }
+    if(!empId || !shift || !office){ statusEl.textContent="Fill all fields"; return; }
 
     checkInBtn.disabled=true;
     checkOutBtn.disabled=true;
@@ -221,50 +128,71 @@ window.onload = function() {
           headers:{"Content-Type":"application/x-www-form-urlencoded"},
           body:`action=${action}&empId=${empId}&shift=${shift}&office=${office}&latitude=${pos.coords.latitude}&longitude=${pos.coords.longitude}&timestamp=${new Date().toISOString()}`
         });
-
         const data = await resp.json();
 
         if(data.success){
-          statusEl.style.color="green";
-          statusEl.textContent=data.message;
+          statusEl.style.color="green"; statusEl.textContent=data.message;
           showSuccess(data.message);
-
-          if(action==="Check-In"){
-            checkInBtn.disabled=true;
-            checkOutBtn.disabled=false;
-          }
-
-          if(action==="Check-Out"){
-            checkInBtn.disabled=true;
-            checkOutBtn.disabled=true;
-          }
-
-        }else{
-          statusEl.style.color="red";
-          statusEl.textContent=data.message;
+          if(action==="Check-In"){ checkInBtn.disabled=true; checkOutBtn.disabled=false; }
+          if(action==="Check-Out"){ checkInBtn.disabled=true; checkOutBtn.disabled=true; }
+        } else {
+          statusEl.style.color="red"; statusEl.textContent=data.message;
           checkInBtn.disabled=false;
+          checkOutBtn.disabled=false;
         }
 
-      }catch{
-        statusEl.textContent="Server Error";
-        checkInBtn.disabled=false;
-      }
+      }catch{ statusEl.textContent="Server Error"; checkInBtn.disabled=false; checkOutBtn.disabled=false; }
 
-    },()=>{
-      statusEl.textContent="Location permission required";
-      checkInBtn.disabled=false;
-    });
+    },()=>{ statusEl.textContent="Location permission required"; checkInBtn.disabled=false; checkOutBtn.disabled=false; });
   }
 
   checkInBtn.addEventListener("click", ()=>submitAttendance("Check-In"));
   checkOutBtn.addEventListener("click", ()=>submitAttendance("Check-Out"));
 
-  function showSuccess(msg){
-    successAnim.textContent="✔ " + msg;
-    successAnim.classList.add("show");
-    setTimeout(()=>successAnim.classList.remove("show"),2000);
-  }
+  function showSuccess(msg){ successAnim.textContent="✔ " + msg; successAnim.classList.add("show"); setTimeout(()=>successAnim.classList.remove("show"),2000); }
 
+  /* ===== HISTORY MODAL ===== */
+  historyBtn.addEventListener("click", async () => {
+    const empId = empInput.value.trim();
+    if (!empId) return alert("Enter Employee ID");
+
+    try {
+      const resp = await fetch(webAppUrl, { method:"POST", headers:{"Content-Type":"application/x-www-form-urlencoded"}, body:`action=getHistory&empId=${empId}` });
+      const data = await resp.json();
+
+      if (data.success && data.history.length) {
+        historyData = data.history;
+        let html = '<table><tr><th>Date</th><th>Check-In Office</th><th>Check-In Time</th><th>Check-Out Time</th><th>Check-Out Office</th><th>Work Duration</th></tr>';
+        data.history.forEach(h => {
+          html += `<tr><td>${h.date||"-"}</td><td>${h.checkInOffice||"-"}</td><td>${h.checkInTime||"-"}</td><td>${h.checkOutTime||"-"}</td><td>${h.checkOutOffice||"-"}</td><td>${h.workDuration||"-"}</td></tr>`;
+        });
+        html += '</table>';
+        document.getElementById("historyContent").innerHTML = html;
+        modal.style.display = "flex";
+      } else {
+        document.getElementById("historyContent").innerHTML = "<p>No history found for this employee.</p>";
+        modal.style.display = "flex";
+      }
+
+    } catch (err) { alert("Error fetching history"); console.error(err); }
+  });
+
+  closeHistoryBtn.addEventListener("click", () => { modal.style.display = "none"; });
+
+  /* ===== DOWNLOAD CSV ===== */
+  downloadCSVBtn.addEventListener("click", () => {
+    if (!historyData || !historyData.length) return alert("No history to download");
+    const headers = ["Date","Check-In Office","Check-In Time","Check-Out Time","Check-Out Office","Work Duration"];
+    const csvRows = [headers.join(",")];
+    historyData.forEach(h=>{
+      const row = [h.date||"", h.checkInOffice||"", h.checkInTime||"", h.checkOutTime||"", h.checkOutOffice||"", h.workDuration||""];
+      csvRows.push(row.map(v=>`"${v}"`).join(","));
+    });
+    const csvString = csvRows.join("\n");
+    const blob = new Blob([csvString], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url; a.download = `${empInput.value.trim()}_attendance.csv`; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  });
 };
 </script>
 </body>
