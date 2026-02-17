@@ -10,7 +10,7 @@
  * - Work Duration Auto Calculate
  *********************************************************/
 
-const GEO_RADIUS = 200; // meters
+const GEO_RADIUS = 300; // meters
 
 /* ================= MAIN ENTRY ================= */
 function doPost(e) {
@@ -136,50 +136,67 @@ function handleAttendance(params) {
 }
 
 /* ================= STRICT OFFICE MATCH ================= */
+/* ================= STRICT OFFICE MATCH (FIXED) ================= */
 function getMatchingOffice(lat, lng, selectedOffice) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const sheet = ss.getSheetByName("Offices");
   if (!sheet) return { success: false, message: "Offices sheet missing" };
 
   const data = sheet.getDataRange().getValues();
+  selectedOffice = selectedOffice.toString().trim();
 
   for (let i = 1; i < data.length; i++) {
-    const officeName = data[i][0];
-    if (!officeName) continue;
+    let officeName = (data[i][0] || "").toString().trim();
+    if (officeName !== selectedOffice) continue;
 
-    if (officeName.toString().trim() === selectedOffice) {
-      const locations = [data[i][1], data[i][2]]; // Only B & C
+    // Check all other columns for locations
+    for (let j = 1; j < data[i].length; j++) {
+      let loc = data[i][j];
+      if (!loc) continue;
 
-      for (let loc of locations) {
-        if (!loc) continue;
-        const parts = loc.toString().split(",");
-        if (parts.length < 2) continue;
+      const parts = loc.toString().split(",");
+      if (parts.length < 2) continue;
 
-        const officeLat = parseFloat(parts[0].trim());
-        const officeLng = parseFloat(parts[1].trim());
-        if (isNaN(officeLat) || isNaN(officeLng)) continue;
+      const officeLat = parseFloat(parts[0].trim());
+      const officeLng = parseFloat(parts[1].trim());
+      if (isNaN(officeLat) || isNaN(officeLng)) continue;
 
-        const distance = getDistanceInMeters(officeLat, officeLng, lat, lng);
-        if (distance <= GEO_RADIUS) return { success: true, officeName: selectedOffice };
+      const distance = getDistanceInMeters(officeLat, officeLng, lat, lng);
+      Logger.log(`Distance to ${officeName} location ${j}: ${distance} meters`);
+
+      if (distance <= GEO_RADIUS) {
+        return { success: true, officeName: selectedOffice };
       }
-
-      return { success: false, message: "Not within 200 meters of selected office" };
     }
+
+    // After checking all locations
+    return { success: false, message: `Not within ${GEO_RADIUS} meters of selected office` };
   }
 
   return { success: false, message: "Selected office not found" };
 }
 
+
 /* ================= DISTANCE CALCULATION ================= */
 function getDistanceInMeters(lat1, lon1, lat2, lon2) {
-  const R = 6371000;
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const R = 6371000; // Earth radius in meters
+  const toRad = x => x * Math.PI / 180;
 
-  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+
+  const rLat1 = toRad(lat1);
+  const rLat2 = toRad(lat2);
+
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(rLat1) * Math.cos(rLat2) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
+
+  return R * c; // distance in meters
 }
+
 
 /* ================= WORK DURATION ================= */
 function calculateDuration(start, end) {
